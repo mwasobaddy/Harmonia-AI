@@ -9,13 +9,31 @@ const BottomNav = () => {
 
   useEffect(() => {
     checkAuthStatus();
+
+    // Listen for storage changes (when user logs in/out)
+    const handleStorageChange = (e) => {
+      if (e.key === 'authToken') {
+        checkAuthStatus();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also listen for custom auth change events
+    const handleAuthChange = () => checkAuthStatus();
+    window.addEventListener('authChange', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authChange', handleAuthChange);
+    };
   }, []);
 
   const checkAuthStatus = async () => {
     const token = localStorage.getItem('authToken');
     if (token) {
       try {
-        const response = await fetch(`${process.env.BACKEND_URL}/api/auth/verify`, {
+        const response = await fetch(`http://localhost:5000/api/auth/verify`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -54,11 +72,16 @@ const BottomNav = () => {
               href={item.href}
               className={`flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-colors ${
                 isActive
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'text-blue-600'
+                  : 'text-gray-600 hover:text-blue-600'
               }`}
             >
-              <IconComponent className="h-5 w-5 mb-1" />
+                <div className={`rounded-full transition-colors p-2 h-8 w-8 flex items-center justify-center ${
+                        isActive
+                        ? 'text-blue-50 bg-blue-600'
+                        : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`}>
+                    <IconComponent className={`h-5 w-5`} />
+                </div>
               <span className="text-xs font-medium">{item.label}</span>
             </Link>
           );

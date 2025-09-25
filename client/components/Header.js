@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import Button from './Button'
 import ProfileDropdown from './ProfileDropdown'
+import { LogIn, LogOut } from 'lucide-react'
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -68,6 +69,8 @@ export default function Header() {
     }
 
     localStorage.removeItem('authToken')
+    // Dispatch custom event to notify components of auth change
+    window.dispatchEvent(new Event('authChange'))
     setIsLoggedIn(false)
     setUser(null)
     router.push('/')

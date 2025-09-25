@@ -19,6 +19,8 @@ export default function Login() {
     if (token) {
       // Store the token in localStorage
       localStorage.setItem('authToken', token)
+      // Dispatch custom event to notify components of auth change
+      window.dispatchEvent(new Event('authChange'))
       setSuccess('Successfully logged in! Redirecting...')
       setTimeout(() => {
         router.push('/chat') // Redirect to chat page after login
