@@ -29,7 +29,42 @@ This is a legal AI service providing automated mitigation statement generation f
 - Legal Compliance: All outputs subject to human review; maintain confidentiality of user data.
 
 ## Key Files/Directories
-- `backend/`: Claude API and Pinecone integration scripts.
-- `frontend/`: Web app components, form builders, chatbot embed.
-- `prompts/`: Offence-specific prompt templates and question sets.
-- `data/`: Sample caselaw JSON files for RAG testing.
+/my-monolith-app
+├── .env                  # Environment variables for both client and server
+├── .gitignore            # Ignore node_modules, .env, etc.
+├── package.json          # Top-level dependencies and scripts
+├── /client/              # React frontend
+│   ├── /public/
+│   │   └── index.html
+│   ├── /src/
+│   │   ├── /components/      # Reusable UI components
+│   │   ├── /context/         # React Context for state management (e.g., AuthContext)
+│   │   ├── /hooks/           # Custom React hooks
+│   │   ├── /pages/           # Main application pages/views
+│   │   ├── /utils/           # Helper functions, API clients, etc.
+│   │   │   └── api.js        # Functions for calling the backend API
+│   │   ├── App.js
+│   │   └── index.js
+│   ├── package.json
+│   └── README.md
+│
+└── /server/              # Express.js backend
+    ├── /prisma/          # Prisma directory
+    │   ├── schema.prisma   # Defines your data model
+    │   └── migrations/
+    ├── /src/
+    │   ├── /controllers/     # Business logic for routes
+    │   │   ├── invoiceController.js
+    │   │   └── userController.js
+    │   ├── /middleware/      # Express middleware (e.g., auth)
+    │   │   └── authMiddleware.js
+    │   ├── /routes/          # API endpoints
+    │   │   ├── invoiceRoutes.js
+    │   │   └── userRoutes.js
+    │   ├── /services/        # Dedicated services for external APIs and business logic
+    │   │   ├── pineconeService.js  # Functions for Pinecone API interactions
+    │   │   └── claudeService.js    # Functions for Claude API interactions
+    │   ├── server.js         # Entry point for the Express server
+    │   └── prismaClient.js   # A module to export the Prisma client instance
+    ├── package.json
+    └── README.md
