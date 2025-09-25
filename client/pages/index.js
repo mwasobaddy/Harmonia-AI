@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { Header, Hero, ServicesSection, HowItWorksSection, Footer } from '../components'
+import { Header, Hero, ServicesSection, Info, Footer, BottomNav } from '../components'
 
 export default function Home() {
   return (
@@ -11,12 +11,13 @@ export default function Home() {
         <link rel="icon" href="/logo.png" />
       </Head>
 
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-gray-50 pb-16 md:pb-0">
         <Header />
         <Hero />
         <ServicesSection />
-        <HowItWorksSection />
+        <Info />
         <Footer />
+        <BottomNav />
       </main>
     </>
   )

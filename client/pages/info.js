@@ -58,7 +58,7 @@ export default function HowItWorks() {
 
   return (
     <Layout
-      title="How It Works - Harmonia-AI"
+      title="Info - Harmonia-AI"
       description="Learn about our AI-powered process for creating professional mitigation statements"
     >
       <div className="bg-gray-50">

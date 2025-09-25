@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import Head from 'next/head'
+import { useRouter } from 'next/router'
 import LoadingSpinner from '../components/LoadingSpinner'
 import Header from '../components/Header'
+import BottomNav from '../components/BottomNav'
+import api from '../lib/api'
 
 export default function Chat() {
   const [messages, setMessages] = useState([])
@@ -9,10 +12,22 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false)
   const [sessionId, setSessionId] = useState(null)
   const messagesEndRef = useRef(null)
+  const router = useRouter()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  useEffect(() => {
+    // Check authentication
+    const token = localStorage.getItem('authToken')
+    if (!token) {
+      router.push('/login')
+      return
+    }
+
+    scrollToBottom()
+  }, [router])
 
   useEffect(() => {
     scrollToBottom()
@@ -21,14 +36,7 @@ export default function Chat() {
   useEffect(() => {
     const initializeChat = async () => {
       try {
-        const response = await fetch(`${process.env.API_URL}/api/chat/init`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-
-        const data = await response.json()
+        const data = await api.initChat()
 
         if (data.sessionId) {
           setSessionId(data.sessionId)
@@ -53,19 +61,7 @@ export default function Chat() {
     setIsLoading(true)
 
     try {
-      const response = await fetch(`${process.env.API_URL}/api/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: inputMessage,
-          conversation: newMessages,
-          sessionId: sessionId
-        }),
-      })
-
-      const data = await response.json()
+      const data = await api.sendChatMessage(inputMessage, newMessages, sessionId)
 
       if (data.sessionId) {
         setSessionId(data.sessionId)
@@ -94,7 +90,7 @@ export default function Chat() {
         <meta name="description" content="Complete your mitigation statement consultation" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
         {/* Header */}
         <Header />
 
@@ -168,6 +164,8 @@ export default function Chat() {
             </div>
           </div>
         </div>
+
+        <BottomNav />
       </div>
     </>
   )

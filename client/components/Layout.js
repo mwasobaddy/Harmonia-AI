@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { Header, Footer } from './index'
+import { Header, Footer, BottomNav } from './index'
 
 export default function Layout({
   children,
@@ -15,12 +15,13 @@ export default function Layout({
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col pb-16 md:pb-0">
         <Header />
         <main className="flex-1">
           {children}
         </main>
         <Footer />
+        <BottomNav />
       </div>
     </>
   )

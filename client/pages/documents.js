@@ -1,7 +1,21 @@
 import Head from 'next/head';
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Header from '../components/Header';
+import BottomNav from '../components/BottomNav';
 
 export default function Documents() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check authentication
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+  }, [router]);
+
   return (
     <>
       <Head>
@@ -9,7 +23,7 @@ export default function Documents() {
         <meta name="description" content="View and manage your documents" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
         <Header />
 
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -21,6 +35,8 @@ export default function Documents() {
             <p className="text-gray-500">No documents available. Upload your first document to get started.</p>
           </div>
         </main>
+
+        <BottomNav />
       </div>
     </>
   );

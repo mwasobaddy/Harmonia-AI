@@ -158,7 +158,45 @@ const authController = {
       console.error('Profile fetch error:', error);
       res.status(401).json({ error: 'Invalid token' });
     }
+  },
+
+  // Update user profile
+  updateProfile: async (req, res) => {
+    try {
+      const token = req.headers.authorization?.split(' ')[1];
+
+      if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const { name, email } = req.body;
+
+      // Update user profile
+      const updatedUser = await prisma.user.update({
+        where: { id: decoded.userId },
+        data: {
+          name: name || undefined,
+          email: email || undefined
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          avatar: true,
+          isVerified: true,
+          createdAt: true
+        }
+      });
+
+      res.json({ user: updatedUser });
+    } catch (error) {
+      console.error('Profile update error:', error);
+      if (error.code === 'P2002') {
+        res.status(400).json({ error: 'Email already in use' });
+      } else {
+        res.status(500).json({ error: 'Failed to update profile' });
+      }
+    }
   }
 };
-
-module.exports = authController;

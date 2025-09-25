@@ -2,15 +2,24 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import Button from './Button'
+import ProfileDropdown from './ProfileDropdown'
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState(null)
+  const [isScrolled, setIsScrolled] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     // Check authentication status on mount and route changes
     checkAuthStatus()
+
+    // Add scroll event listener
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [router.pathname])
 
   const checkAuthStatus = async () => {
@@ -18,7 +27,7 @@ export default function Header() {
     if (token) {
       try {
         // Verify token with backend
-        const response = await fetch('http://localhost:5000/api/auth/verify', {
+        const response = await fetch(`${process.env.BACKEND_URL}/api/auth/verify`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -65,8 +74,8 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white shadow-sm">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className={`fixed top-0 left-0 right-0 z-50 bg-white transition-all duration-300 ${isScrolled ? 'backdrop-blur-sm bg-white/80 border-b border-gray-200 shadow-md' : ''}`}>
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 hidden md:block">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="text-xl font-bold text-gray-900">
@@ -77,8 +86,8 @@ export default function Header() {
             <Link href="/services" className="text-gray-700 hover:text-gray-900">
               Services
             </Link>
-            <Link href="/how-it-works" className="text-gray-700 hover:text-gray-900">
-              How It Works
+            <Link href="/info" className="text-gray-700 hover:text-gray-900">
+              Info
             </Link>
             <Link href="/about" className="text-gray-700 hover:text-gray-900">
               About
@@ -95,12 +104,7 @@ export default function Header() {
                 <Link href="/documents" className="text-gray-700 hover:text-gray-900">
                   Documents
                 </Link>
-                <span className="text-sm text-gray-600">
-                  Welcome, {user?.name?.split(' ')[0]}
-                </span>
-                <Button onClick={handleLogout} size="sm" variant="outline">
-                  Logout
-                </Button>
+                <ProfileDropdown user={user} onLogout={handleLogout} />
               </div>
             ) : (
               <Button href="/login" size="sm">
@@ -108,6 +112,28 @@ export default function Header() {
               </Button>
             )}
           </div>
+        </div>
+      </nav>
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 block md:hidden">
+        <div className="flex justify-between h-[45px] items-center">
+          <div className="flex items-center">
+            <Link href="/" className="text-xl font-bold text-gray-900">
+              Harmonia-AI
+            </Link>
+          </div>
+
+          {isLoggedIn ? (
+            <div className="flex items-center space-x-4">
+              <Button onClick={handleLogout} size="sm" variant="outline" className='!bg-rose-500'>
+                <LogOut className="h-4 w-4 mr-1" />
+              </Button>
+            </div>
+          ) : (
+            <Button href="/login" size="sm" className='bg-rose-500 h-fit'>
+              <LogIn className="h-4 w-4 mr-1" />
+              Login
+            </Button>
+          )}
         </div>
       </nav>
     </header>

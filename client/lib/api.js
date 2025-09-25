@@ -51,6 +51,10 @@ class ApiClient {
   }
 
   // Chat methods
+  async initChat() {
+    return this.request('/chat/init', { method: 'POST' })
+  }
+
   async sendChatMessage(message, conversation, sessionId) {
     return this.request('/chat', {
       method: 'POST',
