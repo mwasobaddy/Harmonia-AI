@@ -132,9 +132,7 @@ export default function Header() {
 
           {isLoggedIn ? (
             <div className="flex items-center space-x-4">
-              <Button onClick={handleLogout} size="sm" variant="outline" className='!bg-rose-500'>
-                <LogOut className="h-4 w-4 mr-1" />
-              </Button>
+              <ProfileDropdown user={user} onLogout={handleLogout} />
             </div>
           ) : (
             <Button href="/login" size="sm" className='bg-rose-500 h-fit'>

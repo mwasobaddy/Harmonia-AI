@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
-import { Home, MessageCircle, FileText, UserIcon, Briefcase, Phone, Info } from 'lucide-react';
+import { Home, MessageCircle, FileText, User, Briefcase, Phone, Info } from 'lucide-react';
 
 const BottomNav = () => {
   const router = useRouter();
