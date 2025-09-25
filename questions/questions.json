@@ -1,0 +1,14 @@
+{
+  "forms": {
+    "medical": {
+      "title": "Medical professional mitigation",
+      "questions": [
+        {"id":"work","text":"Tell me about your work (profession, qualification, hours)."},
+        {"id":"who","text":"Who will receive this mitigation statement?"},
+        {"id":"facts","text":"Briefly describe the incident/charges."},
+        {"id":"personal","text":"Any personal circumstances to share (children, health, finances)?"},
+        {"id":"mitigation","text":"Have you taken any remedial steps or trainings?"}
+      ]
+    }
+  }
+}

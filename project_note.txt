@@ -1,0 +1,167 @@
+Please treat this information as confidential.
+
+Background
+
+By way of background, I am a qualified solicitor and in the past I
+worked as a criminal defence solicitor.
+
+A lot of a criminal solicitors work is to put forward mitigation
+evidence in court on behalf of clients who, for example, have been
+caught committing an offence red-handed. Very often the mitigation put
+forward was quite standard, and its purpose is to lessen the punishment.
+
+I then worked in medical defence representing nurses who came before the
+regulating body, the NMC. Again, this requires me to put forward
+mitigation evidence on behalf of a nurse, who, for example was charged
+with speeding or drink driving.
+
+I now want to offer the service with the help of AI to the public.
+
+My AI project
+
+I have started my AI project to prepare a chat bot for the public to use
+in similar cases where they have been charged with minor criminal
+offences only.
+
+I decided that my chat bot would be made using Claude AI as I had read
+good reviews about its accuracy and reduction in hallucinations. In my
+area of work these, along with security measures, are extremely
+important.
+
+I want a MVP at this stage so I can see how it looks and operates.
+
+Where I have got to
+
+I hired a developer in Germany to undertake some work on this project.
+He is now not able to do anymore work due to personal circumstances.
+This is what we have done:
+
+I am using:
+
+Claude API
+
+GitHib
+
+Pinecone (for RAG)
+
+Render
+
+My developer scrapped quite a bit of caselaw from regulatory body,
+websites and other public source data specifically relating to
+mitigation. This is on my RAG in Pinecone (Json files).
+
+My Prompt
+
+I created my own detailed prompt for the Claude API. My first (and only
+so far) prompt related to medical professionals mitigation. The prompt
+contained approximately 40 to 50 questions, which the nurse or whoever
+was using the chatbot would have to answer to give me a full picture of
+the offence and the mitigation factors.
+
+When we tested it the first time around I wanted the chatbot to be
+conversational with the user, sympathetic and engaging. I wanted one
+question answered at a time with the chatbot saving the answers in the
+background with a view to preparing the mitigation statement later. My
+developer told me that this method was using too many Claude tokens and
+would not be cost effective.
+
+We then thought about using an online form instead to collect the
+answers but could not agree on the best way to do this or what form
+software to use (JotForm, Fillable etc…). I would welcome your
+recommendations here.
+
+Similar Example:
+
+You will see a company offering a similar sort of service here -
+https://www.mylawyer.co.uk/how-mylawyer-works-c/
+
+I don’t know what questionnaire/form Mylawyer use or how their system
+works, but mine may be similar if it is more cost effective to use a
+form. Like their system, my questions and forms should be tailored to
+the specific issue at hand, and in my case the specific offence. I would
+like to start with general mitigation factors which would apply to most
+cases. However, I may also want to have so 3 or 4 different forms and
+prompts for the type of offence the customer chooses. (on the Bubble
+interface I was thinking of offering the following options via a
+dropdown list:
+
+1.  Driving offences
+
+2.  TV licensing offences
+
+3.  Professional regulation
+
+4.  Minor criminal offences
+
+When the customer picked from the drop-down list then the appropriate
+form questionnaire would be sent to then to complete. When the
+questionnaire was completed then it would be fed into Claude to process.
+Claude would then be promoted to prepare a statement based on their
+answers and would also use my RAG to help.
+
+When completed the chatbot would hopefully provide a mitigation
+statement tailored to the offence and data it has been trained on.
+
+Like the Mylawyer offering, I would like my clients to make payment when
+the form or is submitted (third party payment widget). Upon payment I
+would review the statement given by the chatbot/Claude to confirm if it
+was ok, and if it was then send it to the customer.
+
+Due to the nature of the business I don’t really want to keep any
+personal data of users, but accept that I will have too so I can send
+them their response. Is it possible to use Google login or NVIDIA so I
+don’t have to collect any data?
+
+Frontend/Current situation
+
+I don’t have a frontend product in place. For testing my developer in
+Germany created an interface using his own Vercel software (?). If I
+wanted to change my prompt I had to do it via him. This was simply not
+feasible as I may have to change the prompt 100 times before it is
+correct. The output needs to be exactly right in my line of work as
+peoples reputation and potential job relied on proper mitigation.
+
+My current situation is that I now have a backend system with no
+front-end system. I need to fine tune/test the chat bot model against my
+prompt and make adjustments as necessary.
+
+I now have my backend set up and need to know where to go from here to
+see the chatbot in action and to test the outputs.
+
+I want the chatbot to be hosted on a website shortly (I am in the
+process of looking at domains). Personally, I would like a 4 or 5 page
+website to use as an interface, but someone said Wordpress would be too
+heavy for it??? What do you recommend? I need something that is going to
+be able to scale if need be.
+
+What I now need help with:
+
+1.  Creation of a Bubble.io interface or front end. (Claude also
+    proposed other solutions such as Webflow, FlutterFlow, Chatbase,
+    Botsify, Adalo and Glide. These mean nothing to me! I need an
+    experts help.)
+
+2.  I have heard people talking about a React.js program as front-end
+    however, I would like to have a website with potentially five pages
+    maximum that would embed the chatbot. What is my best option?
+
+3.  Can you advise around the prompt issue? I would prefer a
+    conversational chatbot, asking one question at a time in a
+    lawyer/client type conversation, or form filling? If form filling
+    then any particular favourite or custom made one?
+
+4.  If a questionnaire is the only way of doing this then I need help
+    with the creation of a Claude API and Bubble.io compatible
+    questionnaire for the customer to fill in and then this needs
+    feeding into Claude to prepare a response.
+
+5.  How much would you say it would take to get this to a MVP from here
+    and what timescales?
+
+Thanks
+
+Gary
+
+[A screenshot of a website AI-generated content may be incorrect.]
+
+https://www.mylawyer.co.uk/
