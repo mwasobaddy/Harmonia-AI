@@ -28,7 +28,7 @@ export default function Header() {
     if (token) {
       try {
         // Verify token with backend
-        const response = await fetch(`${process.env.BACKEND_URL}/api/auth/verify`, {
+        const response = await fetch('http://localhost:5000/api/auth/verify', {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -38,15 +38,20 @@ export default function Header() {
           const data = await response.json()
           setUser(data.user)
           setIsLoggedIn(true)
-        } else {
+        } else if (response.status === 401) {
           // Token invalid, remove it
           localStorage.removeItem('authToken')
+          setIsLoggedIn(false)
+          setUser(null)
+        } else {
+          // Other errors (server error, network issues, etc.) - don't remove token
+          console.warn('Auth verification failed with status:', response.status)
           setIsLoggedIn(false)
           setUser(null)
         }
       } catch (error) {
         console.error('Auth check failed:', error)
-        localStorage.removeItem('authToken')
+        // Don't remove token on network errors - user might still be logged in
         setIsLoggedIn(false)
         setUser(null)
       }

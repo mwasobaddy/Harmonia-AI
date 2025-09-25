@@ -52,7 +52,6 @@ const BottomNav = () => {
     { href: '/', label: 'Home', icon: Home, alwaysVisible: true },
     { href: '/chat', label: 'Chat', icon: MessageCircle, alwaysVisible: false },
     { href: '/documents', label: 'Documents', icon: FileText, alwaysVisible: false },
-    { href: '/profile', label: 'Profile', icon: UserIcon, alwaysVisible: false },
     { href: '/info', label: 'Info', icon: Info, alwaysVisible: true },
     { href: '/services', label: 'Services', icon: Briefcase, alwaysVisible: true },
     { href: '/contact', label: 'Contact', icon: Phone, alwaysVisible: true },
