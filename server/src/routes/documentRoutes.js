@@ -7,6 +7,7 @@ const prisma = require('../prismaClient');
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
+    console.log('📄 [DEBUG] Fetching documents for userId:', userId);
 
     const documents = await prisma.document.findMany({
       where: {
@@ -25,9 +26,10 @@ router.get('/', authenticateToken, async (req, res) => {
       }
     });
 
+    console.log('📄 [DEBUG] Found documents:', documents.length);
     res.json({ documents });
   } catch (error) {
-    console.error('Error fetching documents:', error);
+    console.error('❌ [DEBUG] Error fetching documents:', error);
     res.status(500).json({ error: 'Failed to fetch documents' });
   }
 });

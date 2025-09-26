@@ -64,6 +64,7 @@ model Document {
   reviewedAt  DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deletedAt   DateTime? // Soft delete field
 
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
