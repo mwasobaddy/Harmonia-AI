@@ -146,8 +146,14 @@ const chatController = {
         msg.role && msg.content && msg.content.trim()
       );
 
-      // Add current message to conversation for completion check
-      const conversationWithCurrentMessage = message ? [...cleanedConversation, { role: 'user', content: message }] : cleanedConversation;
+      // Check if the current message is already in the conversation (it should be the last message)
+      const lastMessage = cleanedConversation[cleanedConversation.length - 1];
+      const hasCurrentMessage = lastMessage && lastMessage.role === 'user' && lastMessage.content === message;
+
+      // Add current message to conversation for completion check only if not already present
+      const conversationWithCurrentMessage = hasCurrentMessage
+        ? cleanedConversation
+        : [...cleanedConversation, { role: 'user', content: message }];
 
       console.log('💬 [DEBUG] Cleaned conversation:', {
         originalLength: conversation?.length || 0,
