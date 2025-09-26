@@ -103,7 +103,7 @@ class ClaudeService {
       console.log('🤖 [DEBUG] Claude AI Prompt being sent:', prompt.substring(0, 1000) + (prompt.length > 1000 ? '...' : ''));
 
       const response = await this.anthropic.messages.create({
-        model: 'claude-3-sonnet-20240229',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 4000,
         temperature: 0.7,
         system: "You are an outstanding UK lawyer with 30 years legal experience in criminal and regulatory compliance law. You are renowned for helping clients prepare plea and mitigation statements to provide to the court or tribunal panel.",

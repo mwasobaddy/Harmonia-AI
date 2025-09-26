@@ -178,6 +178,8 @@ const chatController = {
 
       // If no more questions, generate the statement
       if (questions.length === 0 && state === "questions_continue") {
+        let formattedResponses; // Declare outside try block for error handling
+
         try {
           // Extract user responses for Claude service - use conversation with current message
           const userMessages = conversationWithCurrentMessage
@@ -192,7 +194,7 @@ const chatController = {
           const actualResponses = userMessages.slice(skipCount);
 
           // Format responses for Claude service
-          const formattedResponses = actualResponses.map((answer, index) => ({
+          formattedResponses = actualResponses.map((answer, index) => ({
             question: structuredQuestions[index] || `Question ${index + 1}`,
             answer: answer
           }));
