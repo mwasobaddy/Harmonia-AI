@@ -48,12 +48,24 @@ class ClaudeService {
 
   async queryRelevantCases(query, topK = 5) {
     try {
+      console.log('🔍 [DEBUG] Pinecone Query:', { query, topK });
+
       const queryEmbedding = await this.getEmbedding(query);
+      console.log('🔍 [DEBUG] Generated embedding for query');
 
       const queryResponse = await this.index.query({
         vector: queryEmbedding,
         topK: topK,
         includeMetadata: true,
+      });
+
+      console.log('🔍 [DEBUG] Pinecone Response:', {
+        totalMatches: queryResponse.matches?.length || 0,
+        matches: queryResponse.matches?.map(match => ({
+          id: match.id,
+          score: match.score,
+          contentPreview: match.metadata?.content?.substring(0, 100) + '...'
+        }))
       });
 
       return queryResponse.matches.map(match => ({
@@ -62,7 +74,7 @@ class ClaudeService {
         id: match.id,
       }));
     } catch (error) {
-      console.error('Error querying Pinecone:', error);
+      console.error('❌ [DEBUG] Error querying Pinecone:', error);
       return [];
     }
   }
@@ -74,14 +86,21 @@ class ClaudeService {
         .map(r => `${r.question}: ${r.answer}`)
         .join('\n\n');
 
+      console.log('🤖 [DEBUG] Claude AI Input - User Responses:', responses);
+      console.log('🤖 [DEBUG] Claude AI Input - Combined Input:', combinedInput.substring(0, 500) + (combinedInput.length > 500 ? '...' : ''));
+
       // Query relevant case law
       const relevantCases = await this.queryRelevantCases(combinedInput);
       const context = relevantCases
         .map(c => c.content)
         .join('\n\n---\n\n');
 
+      console.log('🤖 [DEBUG] Claude AI Input - Context from Pinecone:', context.substring(0, 500) + (context.length > 500 ? '...' : ''));
+
       // Create the prompt based on the detailed prompt from prompt.txt
       const prompt = this.buildPrompt(combinedInput, context, offenseType);
+
+      console.log('🤖 [DEBUG] Claude AI Prompt being sent:', prompt.substring(0, 1000) + (prompt.length > 1000 ? '...' : ''));
 
       const response = await this.anthropic.messages.create({
         model: 'claude-3-sonnet-20240229',
@@ -96,9 +115,12 @@ class ClaudeService {
         ]
       });
 
-      return response.content[0].text;
+      const generatedText = response.content[0].text;
+      console.log('🤖 [DEBUG] Claude AI Response:', generatedText.substring(0, 1000) + (generatedText.length > 1000 ? '...' : ''));
+
+      return generatedText;
     } catch (error) {
-      console.error('Error generating mitigation statement:', error);
+      console.error('❌ [DEBUG] Error generating mitigation statement:', error);
       throw new Error('Failed to generate mitigation statement');
     }
   }
