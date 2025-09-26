@@ -171,7 +171,7 @@ const chatController = {
       let isFinal = false;
 
       // If no more questions, generate the statement
-      if (!questions && state === "questions_continue") {
+      if (questions.length === 0 && state === "questions_continue") {
         try {
           // Extract user responses for Claude service - use conversation with current message
           const userMessages = conversationWithCurrentMessage
