@@ -12,7 +12,7 @@ export default function Layout({
         <title>{title}</title>
         <meta name="description" content={description} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/logo.png" />
       </Head>
 
       <div className="min-h-screen flex flex-col pb-16 md:pb-0">

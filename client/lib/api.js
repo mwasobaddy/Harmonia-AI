@@ -62,12 +62,25 @@ class ApiClient {
     })
   }
 
+  async getConversations() {
+    return this.request('/chat/conversations')
+  }
+
+  async getConversation(sessionId) {
+    return this.request(`/chat/conversations/${sessionId}`)
+  }
+
+  async deleteConversation(sessionId) {
+    return this.request(`/chat/conversations/${sessionId}`, { method: 'DELETE' })
+  }
+
+  async deleteOrder(orderId) {
+    return this.request(`/chat/orders/${orderId}`, { method: 'DELETE' })
+  }
+
   // Order methods
-  async createOrder(orderData) {
-    return this.request('/orders', {
-      method: 'POST',
-      body: JSON.stringify(orderData)
-    })
+  async getDocument(documentId) {
+    return this.request(`/documents/${documentId}`)
   }
 
   // Document methods

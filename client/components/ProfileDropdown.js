@@ -40,7 +40,7 @@ const ProfileDropdown = ({ user, onLogout }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-fit bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+        <div className="absolute right-0 mt-2 w-fit bg-white rounded-md shadow-lg pt-1 z-50 border border-gray-200">
           <div className="px-4 py-2 border-b border-gray-200">
             <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
             <p className="text-sm text-gray-500">{user?.email}</p>
@@ -57,7 +57,7 @@ const ProfileDropdown = ({ user, onLogout }) => {
 
           <button
             onClick={handleLogout}
-            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+            className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-100 hover:text-red-900"
           >
             <LogOut className="h-4 w-4 mr-3" />
             Logout

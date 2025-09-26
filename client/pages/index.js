@@ -11,7 +11,7 @@ export default function Home() {
         <link rel="icon" href="/logo.png" />
       </Head>
 
-      <main className="min-h-screen bg-gray-50 pb-16 md:pb-0">
+      <main className="min-h-screen bg-gray-50 pb-16 md:pb-0 flex flex-col">
         <Header />
         <Hero />
         <ServicesSection />
