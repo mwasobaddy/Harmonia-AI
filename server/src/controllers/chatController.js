@@ -1,8 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const claudeService = require('../services/claudeService');
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+const prisma = require('../prismaClient');
 
 // In-memory conversation storage (replace with Redis/database in production)
 // Now organized by userId: { userId: { sessionId: conversation } }
