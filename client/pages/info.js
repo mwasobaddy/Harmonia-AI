@@ -61,15 +61,15 @@ export default function HowItWorks() {
       title="Info - Harmonia-AI"
       description="Learn about our AI-powered process for creating professional mitigation statements"
     >
-      <div className="bg-gray-50">
+      <div className="bg-[#0f2b2fcc]">
         {/* Hero Section */}
-        <div className="bg-white">
+        <div className="bg-[#0f2b2fcc]">
           <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
+              <h1 className="text-4xl font-bold text-white sm:text-5xl">
                 How Our Process Works
               </h1>
-              <p className="mt-4 text-xl text-gray-500 max-w-3xl mx-auto">
+              <p className="mt-4 text-xl text-[#73cfd0] max-w-3xl mx-auto">
                 From consultation to delivery, we guide you through every step of creating
                 your professional mitigation statement using AI and legal expertise.
               </p>
@@ -78,13 +78,13 @@ export default function HowItWorks() {
         </div>
 
         {/* Process Steps */}
-        <div className="py-16 bg-white">
+        <div className="py-16 bg-[#0f2b2fcc]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-extrabold text-gray-900">
+              <h2 className="text-3xl font-extrabold text-white">
                 Our 5-Step Process
               </h2>
-              <p className="mt-4 text-lg text-gray-500">
+              <p className="mt-4 text-lg text-[#73cfd0]">
                 A streamlined process designed to get you the best possible outcome
               </p>
             </div>
@@ -93,13 +93,13 @@ export default function HowItWorks() {
               {steps.map((step, index) => (
                 <div key={index} className="flex items-start">
                   <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white text-xl font-bold">
+                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-[#73cfd0] text-black text-xl font-bold">
                       {step.number}
                     </div>
                   </div>
                   <div className="ml-6">
-                    <h3 className="text-lg font-medium text-gray-900">{step.title}</h3>
-                    <p className="mt-2 text-gray-600">{step.description}</p>
+                    <h3 className="text-lg font-medium text-white">{step.title}</h3>
+                    <p className="mt-2 text-[#73cfd0]">{step.description}</p>
                   </div>
                 </div>
               ))}
@@ -108,13 +108,13 @@ export default function HowItWorks() {
         </div>
 
         {/* Features */}
-        <div className="py-16 bg-gray-50">
+        <div className="py-16 bg-[#0f2b2fcc]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-extrabold text-gray-900">
+              <h2 className="text-3xl font-extrabold text-white">
                 Why Choose Our Service
               </h2>
-              <p className="mt-4 text-lg text-gray-500">
+              <p className="mt-4 text-lg text-[#73cfd0]">
                 Professional quality with the convenience of modern technology
               </p>
             </div>
@@ -122,8 +122,8 @@ export default function HowItWorks() {
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
                 <div key={index} className="bg-white rounded-lg p-6 shadow-md">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
+                  <h3 className="text-lg font-semibold text-black mb-3">{feature.title}</h3>
+                  <p className="text-black">{feature.description}</p>
                 </div>
               ))}
             </div>
@@ -131,50 +131,50 @@ export default function HowItWorks() {
         </div>
 
         {/* FAQ Section */}
-        <div className="py-16 bg-white">
+        <div className="py-16 bg-[#0f2b2fcc]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-extrabold text-gray-900">
+              <h2 className="text-3xl font-extrabold text-white">
                 Frequently Asked Questions
               </h2>
             </div>
 
             <div className="max-w-3xl mx-auto space-y-6">
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">How long does the process take?</h3>
-                <p className="text-gray-600">The questionnaire takes about 15 minutes to complete. Once submitted, you'll receive your reviewed statement within 3 business days.</p>
+              <div className="bg-white rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-black mb-2">How long does the process take?</h3>
+                <p className="text-black">The questionnaire takes about 15 minutes to complete. Once submitted, you'll receive your reviewed statement within 3 business days.</p>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Is my information secure?</h3>
-                <p className="text-gray-600">Yes, we use enterprise-grade encryption and security measures. Your personal information is never stored permanently and is deleted after processing.</p>
+              <div className="bg-white rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-black mb-2">Is my information secure?</h3>
+                <p className="text-black">Yes, we use enterprise-grade encryption and security measures. Your personal information is never stored permanently and is deleted after processing.</p>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Can I save and resume later?</h3>
-                <p className="text-gray-600">Absolutely! Your progress is automatically saved as you go through the questionnaire. You can return anytime to continue where you left off.</p>
+              <div className="bg-white rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-black mb-2">Can I save and resume later?</h3>
+                <p className="text-black">Absolutely! Your progress is automatically saved as you go through the questionnaire. You can return anytime to continue where you left off.</p>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">What if I need changes to my statement?</h3>
-                <p className="text-gray-600">After receiving your statement, you can request reasonable amendments. Our legal team will review and incorporate any necessary changes.</p>
+              <div className="bg-white rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-black mb-2">What if I need changes to my statement?</h3>
+                <p className="text-black">After receiving your statement, you can request reasonable amendments. Our legal team will review and incorporate any necessary changes.</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* CTA Section */}
-        <div className="bg-blue-600">
+        <div className="bg-[#73cfd0]">
           <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-              <h2 className="text-3xl font-extrabold text-white">
+              <h2 className="text-3xl font-extrabold text-black">
                 Ready to Get Started?
               </h2>
-              <p className="mt-4 text-xl text-blue-100">
+              <p className="mt-4 text-xl text-black">
                 Begin your mitigation statement consultation today
               </p>
               <div className="mt-8">
-                <Button href="/chat" size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
+                <Button href="/chat" size="lg" className="bg-white text-[#0f2b2fcc] hover:bg-[#73cfd0] hover:text-black">
                   Start Your Consultation
                 </Button>
               </div>
