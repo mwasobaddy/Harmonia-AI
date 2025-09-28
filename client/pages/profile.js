@@ -99,7 +99,7 @@ export default function Profile() {
         <Head>
           <title>Profile - Harmonia-AI</title>
         </Head>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-[#0f2b2fcc] flex items-center justify-center">
           <LoadingSpinner size="lg" />
         </div>
       </>
@@ -112,12 +112,12 @@ export default function Profile() {
         description="Manage your profile settings"
     >
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#0f2b2fcc]">
         <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-              <p className="mt-1 text-sm text-gray-600">
+            <div className="px-6 py-4 border-b border-[#73cfd0]">
+              <h1 className="text-2xl font-bold text-black">Profile Settings</h1>
+              <p className="mt-1 text-sm text-[#73cfd0]">
                 Manage your account information and preferences.
               </p>
             </div>
@@ -126,8 +126,8 @@ export default function Profile() {
               {message && (
                 <div className={`mb-6 p-4 rounded-md ${
                   message.includes('successfully')
-                    ? 'bg-green-50 border border-green-200 text-green-700'
-                    : 'bg-red-50 border border-red-200 text-red-700'
+                    ? 'bg-[#73cfd0] border border-[#0f2b2fcc] text-black'
+                    : 'bg-red-100 border border-red-300 text-red-900'
                 }`}>
                   {message}
                 </div>
@@ -135,7 +135,7 @@ export default function Profile() {
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="name" className="block text-sm font-medium text-black">
                     Full Name
                   </label>
                   <input
@@ -144,13 +144,13 @@ export default function Profile() {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full px-3 py-2 border border-[#73cfd0] rounded-md shadow-sm focus:outline-none focus:ring-[#73cfd0] focus:border-[#73cfd0] text-black bg-white"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="email" className="block text-sm font-medium text-black">
                     Email Address
                   </label>
                   <input
@@ -159,10 +159,10 @@ export default function Profile() {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full px-3 py-2 border border-[#73cfd0] rounded-md shadow-sm focus:outline-none focus:ring-[#73cfd0] focus:border-[#73cfd0] text-black bg-white"
                     required
                   />
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-[#73cfd0]">
                     Your email address is used for account verification and notifications.
                   </p>
                 </div>
@@ -172,12 +172,14 @@ export default function Profile() {
                     type="button"
                     variant="outline"
                     onClick={() => router.back()}
+                    className="bg-white text-[#0f2b2fcc] border border-[#73cfd0] hover:bg-[#73cfd0] hover:text-black"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     disabled={saving}
+                    className="bg-[#73cfd0] text-black hover:bg-white hover:text-[#0f2b2fcc]"
                   >
                     {saving ? 'Saving...' : 'Save Changes'}
                   </Button>
@@ -188,20 +190,20 @@ export default function Profile() {
 
           {/* Account Information Section */}
           <div className="mt-8 bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900">Account Information</h2>
+            <div className="px-6 py-4 border-b border-[#73cfd0]">
+              <h2 className="text-lg font-medium text-black">Account Information</h2>
             </div>
             <div className="px-6 py-4">
               <dl className="space-y-3">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Account Created</dt>
-                  <dd className="text-sm text-gray-900">
+                  <dt className="text-sm font-medium text-[#73cfd0]">Account Created</dt>
+                  <dd className="text-sm text-black">
                     {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Account Status</dt>
-                  <dd className="text-sm text-gray-900">
+                  <dt className="text-sm font-medium text-[#73cfd0]">Account Status</dt>
+                  <dd className="text-sm text-black">
                     {user?.isVerified ? 'Verified' : 'Unverified'}
                   </dd>
                 </div>
