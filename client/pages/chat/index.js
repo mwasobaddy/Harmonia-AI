@@ -309,8 +309,8 @@ export default function Chat() {
   return (
     <Layout title="Chat - Harmonia-AI" description="Your chat conversations">
       <div className="h-full flex min-h-0 flex-1 flex-row bg-[#0f2b2fcc]">
-        {/* Sidebar: hidden on mobile, visible on desktop */}
-        <div className="hidden md:flex">
+        {/* Sidebar: visible on all screens like WhatsApp */}
+        <div className="w-full md:w-[380px] max-w-full md:max-w-[380px] flex flex-col min-h-0">
           <ChatSidebar
             conversations={filteredConversations}
             onSelectConversation={handleSelectConversation}
@@ -327,8 +327,8 @@ export default function Chat() {
             onDeleteSelectedConversations={handleDeleteSelectedConversations}
           />
         </div>
-        {/* Main Area: visible on all screens */}
-        <div className="flex-1 flex flex-col items-center justify-center bg-[#0f2b2fcc] min-h-0">
+        {/* Main Area: hidden on mobile, visible on desktop */}
+        <div className="hidden md:flex flex-1 flex flex-col items-center justify-center bg-[#0f2b2fcc] min-h-0">
           <div className="flex flex-col items-center justify-center">
             <div className="w-32 h-32 rounded-full bg-[#73cfd0] flex items-center justify-center mb-6">
               <MessageCircle className="h-16 w-16 text-black" />
