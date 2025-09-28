@@ -50,19 +50,7 @@ export default function Chat() {
       const data = await api.getConversations()
       setConversations(data.conversations || [])
 
-      // Auto-select the first conversation if available
-      if (data.conversations && data.conversations.length > 0) {
-        const firstConversation = data.conversations[0]
-        setSelectedConversation(firstConversation)
-
-        // For new conversations, set welcome message directly
-        if (firstConversation.messageCount <= 1 && !firstConversation.isCompleted) {
-          setMessages([{ role: 'assistant', content: "Hi, welcome to your consultation. This should take about 15 minutes to complete as I need important information. Are you ready to start?" }])
-        } else {
-          // For existing conversations, load from backend
-          loadConversationHistory(firstConversation)
-        }
-      }
+      // Do not auto-select any conversation on the list page
     } catch (error) {
       console.error('Error loading conversations:', error)
     } finally {
@@ -134,8 +122,8 @@ export default function Chat() {
     )
 
     if (blankConversation) {
-      // Select the existing blank conversation instead of creating a new one
-      selectConversation(blankConversation)
+      // Navigate to the existing blank conversation
+      router.push('/chat/' + blankConversation.sessionId)
       return
     }
 
@@ -152,20 +140,11 @@ export default function Chat() {
         }
 
         setConversations(prev => [newConversation, ...prev])
-        setSelectedConversation(newConversation)
-        setMessages([]) // Clear current messages
-
-        // Show initial loading for 3 seconds and disable input
-        setIsInitialLoading(true)
-        setTimeout(() => {
-          setIsInitialLoading(false)
-          // Start the conversation with welcome message
-          setMessages([{ role: 'assistant', content: "Hi, welcome to your consultation. This should take about 15 minutes to complete as I need important information. Are you ready to start?" }])
-        }, 3000)
+        // Navigate to the new conversation
+        router.push('/chat/' + data.sessionId)
       }
     } catch (error) {
       console.error('Error creating new conversation:', error)
-      setIsInitialLoading(false)
     }
   }
 
@@ -326,13 +305,8 @@ export default function Chat() {
         return newSet
       })
     } else {
-      // Find the conversation object by sessionId
-      const conversation = conversations.find(conv => conv.sessionId === conversationId)
-      if (conversation) {
-        selectConversation(conversation)
-        // On mobile, switch to chat view after selecting conversation
-        setIsMobileChatView(true)
-      }
+      // Navigate to the chat page for this conversation
+      router.push('/chat/' + conversationId)
     }
   }
 
@@ -350,8 +324,8 @@ export default function Chat() {
       <div className="h-full min-h-0 flex-1 flex flex-col bg-gray-50">
         <div className="w-full md:px-6 lg:px-8 flex-1 flex justify-center min-h-0">
           <div className={`flex overflow-hidden w-full flex-1 min-h-0`}>
-            {/* Sidebar - Conversations List */}
-            <div className={`w-full md:w-80 border-r border-gray-200 flex flex-col min-h-0 ${isMobileChatView ? 'hidden' : 'flex'}`}>
+            {/* Conversations List - Full Width */}
+            <div className="w-full border-r border-gray-200 flex flex-col min-h-0">
               {/* Sidebar Header */}
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
@@ -482,153 +456,6 @@ export default function Chat() {
                   ))
                 )}
               </div>
-            </div>
-
-            {/* Main Chat Area */}
-            <div className={`flex-1 flex flex-col min-h-0 ${!isMobileChatView ? 'hidden' : 'flex'} md:flex`}>
-              {selectedConversation ? (
-                <>
-                  <div className='bg-blue-600 border-b border-blue-700 text-white px-6 py-2 flex gap-4 items-center'>
-                    {/* Mobile Back Button */}
-                    <div className="md:hidden">
-                      <button
-                        onClick={() => setIsMobileChatView(false)}
-                        className="flex items-center gap-2 text-blue-100 hover:text-white"
-                      >
-                        <ArrowLeft size={16} />
-                      </button>
-                    </div>
-                    <div className="">
-                      <h1 className="text-xl font-semibold">{selectedConversation.title}</h1>
-                      <p className="text-blue-100 text-sm">
-                        {selectedConversation.isCompleted ? 'Completed' : 'In Progress'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                    {messages.length === 0 && (
-                      <div className="text-center text-gray-500 mt-8">
-                        <p>Select a conversation to start chatting</p>
-                      </div>
-                    )}
-
-                    {messages.map((message, index) => (
-                      <div
-                        key={index}
-                        className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} items-start space-x-2`}
-                      >
-                        {message.role === 'assistant' && (
-                          <div className="flex-shrink-0 mt-1">
-                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                              <Bot className="h-4 w-4 text-gray-600" />
-                            </div>
-                          </div>
-                        )}
-                        <div
-                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            message.role === 'user'
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-200 text-gray-800'
-                          }`}
-                        >
-                          <p className="text-sm">{message.content}</p>
-                        </div>
-                        {message.role === 'user' && (
-                          <div className="flex-shrink-0 mt-1">
-                            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                              <User className="h-4 w-4 text-white" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-
-                    {isLoading && (
-                      <div className="flex justify-start items-start space-x-2">
-                        <div className="flex-shrink-0 mt-1">
-                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                            <Bot className="h-4 w-4 text-gray-600" />
-                          </div>
-                        </div>
-                        <div className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg">
-                          <div className="flex items-center space-x-2">
-                            <LoadingSpinner size="sm" color="gray" />
-                            <span className="text-sm">Thinking...</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {isInitialLoading && (
-                      <div className="flex justify-start items-start space-x-2">
-                        <div className="flex-shrink-0 mt-1">
-                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                            <Bot className="h-4 w-4 text-gray-600" />
-                          </div>
-                        </div>
-                        <div className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg">
-                          <div className="flex items-center space-x-2">
-                            <LoadingSpinner size="sm" color="gray" />
-                            <span className="text-sm">Thinking...</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div ref={messagesEndRef} />
-                  </div>
-
-                  {/* Input Form */}
-                  <div className="border-t p-4">
-                    <form onSubmit={sendMessage} className="flex space-x-4 items-center">
-                      <input
-                        type="text"
-                        value={inputMessage}
-                        onChange={(e) => setInputMessage(e.target.value)}
-                        placeholder="Type your response here..."
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        disabled={isLoading || isInitialLoading}
-                      />
-                      <button
-                        type="button"
-                        onClick={saveDraft}
-                        disabled={isSavingDraft || messages.length === 0 || selectedConversation?.isCompleted}
-                        className={`p-2 h-fit rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${
-                          selectedConversation?.isCompleted 
-                            ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
-                            : 'bg-green-600 text-white hover:bg-green-700'
-                        }`}
-                        title={selectedConversation?.isCompleted ? "Conversation completed - no need to save draft" : "Save Draft"}
-                      >
-                        <Save className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isLoading || isInitialLoading || !inputMessage.trim()}
-                        className="p-2 h-fit rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        <Send className="h-4 w-4" />
-                      </button>
-                    </form>
-                  </div>
-                </>
-              ) : (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center">
-                    <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
-                    <p className="text-gray-500 mb-4">Choose a conversation from the sidebar or start a new one</p>
-                    <button
-                      onClick={createNewConversation}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                      Start New Conversation
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
