@@ -4,82 +4,21 @@ import { useRouter } from 'next/router'
 import Button from './Button'
 import ProfileDropdown from './ProfileDropdown'
 import { LogIn, LogOut } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 export default function Header() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [user, setUser] = useState(null)
   const [isScrolled, setIsScrolled] = useState(false)
   const router = useRouter()
+  const { isLoggedIn, user } = useAuth()
 
   useEffect(() => {
-    // Check authentication status on mount and route changes
-    checkAuthStatus()
-
     // Add scroll event listener
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 0)
     }
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [router.pathname])
-
-  const checkAuthStatus = async () => {
-    const token = localStorage.getItem('authToken')
-    if (token) {
-      try {
-        // Verify token with backend
-        const response = await fetch('http://localhost:5000/api/auth/verify', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          setUser(data.user)
-          setIsLoggedIn(true)
-        } else if (response.status === 401) {
-          // Token invalid, remove it
-          localStorage.removeItem('authToken')
-          setIsLoggedIn(false)
-          setUser(null)
-        } else {
-          // Other errors (server error, network issues, etc.) - don't remove token
-          console.warn('Auth verification failed with status:', response.status)
-          setIsLoggedIn(false)
-          setUser(null)
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error)
-        // Don't remove token on network errors - user might still be logged in
-        setIsLoggedIn(false)
-        setUser(null)
-      }
-    } else {
-      setIsLoggedIn(false)
-      setUser(null)
-    }
-  }
-
-  const handleLogout = async () => {
-    try {
-      await fetch('http://localhost:5000/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`
-        }
-      })
-    } catch (error) {
-      console.error('Logout error:', error)
-    }
-
-    localStorage.removeItem('authToken')
-    // Dispatch custom event to notify components of auth change
-    window.dispatchEvent(new Event('authChange'))
-    setIsLoggedIn(false)
-    setUser(null)
-    router.push('/')
-  }
+  }, [])
 
   return (
     <header className={`sticky top-0 left-0 right-0 z-50 bg-white transition-all duration-300 ${isScrolled ? 'backdrop-blur-sm bg-white/80 border-b border-gray-200 shadow-md' : ''}`}>
@@ -112,7 +51,7 @@ export default function Header() {
                 <Link href="/documents" className="text-gray-700 hover:text-gray-900">
                   Documents
                 </Link>
-                <ProfileDropdown user={user} onLogout={handleLogout} />
+                <ProfileDropdown user={user} />
               </div>
             ) : (
               <Button href="/login" size="sm">
@@ -132,7 +71,7 @@ export default function Header() {
 
           {isLoggedIn ? (
             <div className="flex items-center space-x-4">
-              <ProfileDropdown user={user} onLogout={handleLogout} />
+              <ProfileDropdown user={user} />
             </div>
           ) : (
             <Button href="/login" size="sm" className='bg-rose-500 h-fit'>
