@@ -20,6 +20,7 @@ model User {
 
   orders    Order[]
   documents Document[]
+  draftConversations DraftConversation[]
 
   @@map("users")
 }
@@ -31,6 +32,7 @@ model Order {
   status        String   @default("PENDING") // Changed from OrderStatus enum
   amount        Float
   stripeSessionId String? @unique
+  completionMessage String? // Store the actual completion message sent to user
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   deletedAt     DateTime? // Soft delete field
@@ -70,4 +72,21 @@ model Document {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("documents")
+}
+
+model DraftConversation {
+  id          String   @id @default(cuid())
+  userId      String
+  sessionId   String   // Reference to the in-memory session
+  title       String
+  messages    String   // JSON string of messages array
+  offenseType String?  // Optional offense type if specified
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime? // Soft delete field
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sessionId])
+  @@map("draft_conversations")
 }

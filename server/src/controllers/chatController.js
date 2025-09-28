@@ -211,6 +211,7 @@ const chatController = {
                 offenseType: 'general', // TODO: Get this from conversation or user input
                 status: 'COMPLETED',
                 amount: 49.99, // TODO: Get actual pricing
+                completionMessage: responseText, // Store the actual completion message
                 responses: {
                   create: formattedResponses.map(response => ({
                     question: response.question,
@@ -240,7 +241,7 @@ const chatController = {
             // Continue with response even if database storage fails
           }
 
-          responseText = "Thank you for providing all that information. I've generated your mitigation statement and submitted it for review by our qualified legal team. You'll receive an email notification once it's been reviewed and approved for delivery. You can check the status in your Documents section.";
+            responseText = "Thank you for providing all that information. I've generated your mitigation statement and submitted it for review by our qualified legal team. You'll receive an email notification once it's been reviewed and approved for delivery. You can check the status in your Documents section. Click <a href='/documents'>here</a> to view your documents.";
           isFinal = true;
         } catch (error) {
           console.error('Error generating mitigation statement:', error);
@@ -255,6 +256,7 @@ const chatController = {
                 offenseType: 'general',
                 status: 'PENDING', // Mark as pending since statement generation failed
                 amount: 49.99,
+                completionMessage: responseText, // Store the actual completion message
                 responses: {
                   create: formattedResponses.map(response => ({
                     question: response.question,
@@ -402,8 +404,33 @@ const chatController = {
         };
       });
 
+      // Get draft conversations from database
+      const dbDrafts = await prisma.draftConversation.findMany({
+        where: {
+          userId,
+          deletedAt: null // Only get non-deleted drafts
+        },
+        orderBy: {
+          updatedAt: 'desc'
+        }
+      });
+
+      const draftConversations = dbDrafts.map(draft => {
+        const messages = JSON.parse(draft.messages);
+        return {
+          id: draft.id,
+          sessionId: draft.sessionId,
+          title: draft.title,
+          messageCount: messages.length,
+          lastMessageTime: draft.updatedAt.toISOString(),
+          isCompleted: false, // Drafts are not completed
+          type: 'draft', // Mark as draft conversation
+          offenseType: draft.offenseType
+        };
+      });
+
       // Combine both types of conversations
-      const allConversations = [...inMemoryConversations, ...databaseConversations];
+      const allConversations = [...inMemoryConversations, ...databaseConversations, ...draftConversations];
 
       // Sort by last message time (most recent first)
       allConversations.sort((a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime));
@@ -488,7 +515,7 @@ const chatController = {
           // Add completion message
           messages.push({
             role: 'assistant',
-            content: "Thank you for providing all that information. I've generated your mitigation statement and it will be available shortly.",
+            content: order.completionMessage || "Thank you for providing all that information. I've generated your mitigation statement and it will be available shortly.",
             timestamp: order.updatedAt
           });
 
@@ -498,6 +525,25 @@ const chatController = {
             responsesCount: order.responses.length
           });
 
+          return res.json({ messages });
+        }
+
+        // If not an order, try to get draft conversation
+        const draft = await prisma.draftConversation.findFirst({
+          where: {
+            sessionId,
+            userId,
+            deletedAt: null
+          }
+        });
+
+        if (draft) {
+          const messages = JSON.parse(draft.messages);
+          console.log('📖 [DEBUG] Retrieved draft conversation:', {
+            draftId: draft.id,
+            sessionId,
+            messageCount: messages.length
+          });
           return res.json({ messages });
         }
       } catch (dbError) {
@@ -549,8 +595,28 @@ const chatController = {
           console.log('🗑️ [DEBUG] Soft deleted order from database:', sessionId);
           return res.json({ success: true, type: 'order' });
         }
+
+        // If not an order, try to delete as draft conversation
+        const draft = await prisma.draftConversation.findFirst({
+          where: {
+            sessionId,
+            userId,
+            deletedAt: null
+          }
+        });
+
+        if (draft) {
+          // Soft delete the draft
+          await prisma.draftConversation.update({
+            where: { id: draft.id },
+            data: { deletedAt: new Date() }
+          });
+
+          console.log('🗑️ [DEBUG] Soft deleted draft conversation from database:', sessionId);
+          return res.json({ success: true, type: 'draft' });
+        }
       } catch (dbError) {
-        console.log('🗑️ [DEBUG] Database lookup failed or order not found:', dbError.message);
+        console.log('🗑️ [DEBUG] Database lookup failed or order/draft not found:', dbError.message);
       }
 
       // If neither session nor order found
@@ -594,6 +660,53 @@ const chatController = {
     } catch (error) {
       console.error('❌ [DEBUG] Error deleting order:', error);
       res.status(500).json({ error: 'Failed to delete order' });
+    }
+  },
+
+  // Save a draft conversation to the database
+  saveDraft: async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const { sessionId, messages, title, offenseType } = req.body;
+
+      console.log('💾 [DEBUG] Saving draft conversation:', { userId, sessionId, messageCount: messages?.length, title });
+
+      if (!sessionId || !messages || !Array.isArray(messages)) {
+        return res.status(400).json({ error: 'Invalid request data' });
+      }
+
+      // Generate a title if not provided
+      const draftTitle = title || (messages.length > 1 ? messages[1]?.content?.substring(0, 50) + '...' : 'Draft Conversation');
+
+      // Save or update the draft conversation
+      const draft = await prisma.draftConversation.upsert({
+        where: {
+          userId_sessionId: {
+            userId,
+            sessionId
+          }
+        },
+        update: {
+          title: draftTitle,
+          messages: JSON.stringify(messages),
+          offenseType: offenseType || null,
+          updatedAt: new Date()
+        },
+        create: {
+          userId,
+          sessionId,
+          title: draftTitle,
+          messages: JSON.stringify(messages),
+          offenseType: offenseType || null
+        }
+      });
+
+      console.log('💾 [DEBUG] Successfully saved draft:', { draftId: draft.id, sessionId });
+      res.json({ success: true, draftId: draft.id });
+
+    } catch (error) {
+      console.error('❌ [DEBUG] Error saving draft:', error);
+      res.status(500).json({ error: 'Failed to save draft' });
     }
   }
 };

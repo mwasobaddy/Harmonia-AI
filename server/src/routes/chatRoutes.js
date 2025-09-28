@@ -21,4 +21,7 @@ router.delete('/conversations/:sessionId', authenticateToken, chatController.del
 // Delete an order by orderId (soft delete)
 router.delete('/orders/:orderId', authenticateToken, chatController.deleteOrder);
 
+// Save a draft conversation
+router.post('/drafts', authenticateToken, chatController.saveDraft);
+
 module.exports = router;
