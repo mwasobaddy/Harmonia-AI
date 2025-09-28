@@ -5,8 +5,9 @@ import toast from 'react-hot-toast'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Layout from '../../components/Layout'
 import api from '../../lib/api'
-import { MessageCircle, Bot, User, Save, Send, ArrowLeft } from 'lucide-react'
+import { MessageCircle, Bot, User, Save, Send, ArrowLeft, Plus, Search } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import ChatSidebar from '../../components/ChatSidebar'
 
 export default function Chat() {
   const [conversation, setConversation] = useState(null)
@@ -15,10 +16,60 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(false)
   const [isSavingDraft, setIsSavingDraft] = useState(false)
+  const [conversations, setConversations] = useState([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true)
   const messagesEndRef = useRef(null)
   const router = useRouter()
   const { id } = router.query
   const { isLoggedIn, loading } = useAuth()
+  // Fetch all conversations for sidebar
+  useEffect(() => {
+    if (!loading && isLoggedIn) {
+      loadConversations()
+    }
+    // eslint-disable-next-line
+  }, [isLoggedIn, loading])
+
+  const loadConversations = async () => {
+    setIsLoadingConversations(true)
+    try {
+      const data = await api.getConversations()
+      setConversations(data.conversations || [])
+    } catch (error) {
+      setConversations([])
+    } finally {
+      setIsLoadingConversations(false)
+    }
+  }
+  const filteredConversations = conversations.filter(conv =>
+    conv.title.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const handleSelectConversation = (conversationId) => {
+    if (conversationId !== id) {
+      router.push('/chat/' + conversationId)
+    }
+  }
+
+  const handleNewConversation = async () => {
+    // Check if there's already a blank conversation that hasn't been started
+    const blankConversation = conversations.find(conv =>
+      conv.title === 'New Conversation' &&
+      conv.messageCount <= 1 &&
+      !conv.isCompleted
+    )
+    if (blankConversation) {
+      router.push('/chat/' + blankConversation.sessionId)
+      return
+    }
+    try {
+      const data = await api.initChat()
+      if (data.sessionId) {
+        router.push('/chat/' + data.sessionId)
+      }
+    } catch (error) {}
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -160,11 +211,43 @@ export default function Chat() {
     }
   }
 
+  // WhatsApp-style: show sidebar and chat area side by side on desktop, stacked on mobile
   if (!conversation) {
     return (
       <Layout title="Chat - Harmonia-AI" description="Your chat conversation">
-        <div className="h-full min-h-0 flex-1 flex flex-col bg-gray-50">
-          <div className="w-full px-6 lg:px-8 flex-1 flex justify-center min-h-0">
+        <div className="h-full min-h-0 flex-1 flex flex-row bg-[#111b21]">
+          {/* Sidebar */}
+          <div className="hidden md:flex w-[380px] max-w-full flex-col min-h-0 bg-[#202c33] border-r border-[#222d34]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#222d34] bg-[#202c33]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#25d366] flex items-center justify-center text-white font-bold text-lg">U</div>
+                <span className="text-white font-semibold text-lg">Chats</span>
+              </div>
+              <button
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-[#25d366] hover:bg-[#1fa855] transition-colors"
+                title="New Chat"
+                disabled
+              >
+                <Plus className="h-5 w-5 text-white" />
+              </button>
+            </div>
+            <div className="px-4 py-2 bg-[#111b21] border-b border-[#222d34]">
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-3 top-3 text-[#667781]" />
+                <input
+                  type="text"
+                  placeholder="Search or start new chat"
+                  className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#2a3942] text-white border-none focus:outline-none focus:ring-2 focus:ring-[#25d366] placeholder-[#667781]"
+                  disabled
+                />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto bg-[#111b21] flex items-center justify-center">
+              <LoadingSpinner size="lg" />
+            </div>
+          </div>
+          {/* Main area */}
+          <div className="flex-1 flex flex-col min-h-0 bg-[#222d34]">
             <div className="flex-1 flex items-center justify-center">
               <LoadingSpinner size="lg" />
             </div>
@@ -175,137 +258,140 @@ export default function Chat() {
   }
 
   return (
-    <Layout
-      title="Chat - Harmonia-AI"
-      description="Your chat conversation"
-    >
-      <div className="h-full min-h-0 flex-1 flex flex-col bg-gray-50">
-        <div className="w-full px-6 lg:px-8 flex-1 flex justify-center min-h-0">
-          <div className="flex-1 flex flex-col min-h-0">
-            {/* Header */}
-            <div className='bg-blue-600 border-b border-blue-700 text-white px-6 py-2 flex gap-4 items-center'>
-              <button
-                onClick={() => router.push('/chat')}
-                className="flex items-center gap-2 text-blue-100 hover:text-white"
-              >
-                <ArrowLeft size={16} />
-                Back to Conversations
-              </button>
-              <div className="">
-                <h1 className="text-xl font-semibold">{conversation.title || 'Conversation'}</h1>
-                <p className="text-blue-100 text-sm">
-                  {conversation.isCompleted ? 'Completed' : 'In Progress'}
-                </p>
+    <Layout title="Chat - Harmonia-AI" description="Your chat conversation">
+  <div className="h-full flex min-h-0 flex-1 flex-row bg-[#0f2b2fcc]">
+        {/* Sidebar (desktop only) */}
+        <div className="hidden md:flex">
+          <ChatSidebar
+            conversations={filteredConversations}
+            onSelectConversation={handleSelectConversation}
+            selectedId={id}
+            onNewConversation={handleNewConversation}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            loading={isLoadingConversations}
+            bgColor="#0f2b2fcc"
+            accentColor="#73cfd0"
+            textColor="black"
+          />
+        </div>
+        {/* Main chat area */}
+  <div className="flex-1 flex flex-col min-h-0 bg-white">
+          {/* Chat header */}
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-[#73cfd0] bg-white sticky top-0 z-10">
+            <button
+              onClick={() => router.push('/chat')}
+              className="md:hidden flex items-center gap-2 text-[#73cfd0] hover:text-[#0f2b2fcc]"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div className="w-10 h-10 rounded-full bg-[#73cfd0] flex items-center justify-center text-black font-bold text-lg">{conversation?.title?.charAt(0)?.toUpperCase() || 'C'}</div>
+            <div className="flex flex-col">
+              <span className="text-black font-semibold text-lg">{conversation?.title || 'Conversation'}</span>
+              <span className="text-[#73cfd0] text-xs">{conversation?.isCompleted ? 'Completed' : 'In Progress'}</span>
+            </div>
+          </div>
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 bg-white">
+            {messages.length === 0 && (
+              <div className="text-center text-[#667781] mt-8">
+                <p>Loading conversation...</p>
               </div>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {messages.length === 0 && (
-                <div className="text-center text-gray-500 mt-8">
-                  <p>Loading conversation...</p>
-                </div>
-              )}
-
-              {messages.map((message, index) => (
+            )}
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} items-end`}
+              >
+                {message.role === 'assistant' && (
+                  <div className="flex-shrink-0 mb-1">
+                    <div className="w-8 h-8 bg-[#25d366] rounded-full flex items-center justify-center">
+                      <Bot className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                )}
                 <div
-                  key={index}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} items-start space-x-2`}
-                >
-                  {message.role === 'assistant' && (
-                    <div className="flex-shrink-0 mt-1">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                        <Bot className="h-4 w-4 text-gray-600" />
-                      </div>
-                    </div>
-                  )}
-                  <div
-                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      message.role === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-800'
-                    }`}
-                  >
-                    <p className="text-sm">{message.content}</p>
-                  </div>
-                  {message.role === 'user' && (
-                    <div className="flex-shrink-0 mt-1">
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                        <User className="h-4 w-4 text-white" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {isLoading && (
-                <div className="flex justify-start items-start space-x-2">
-                  <div className="flex-shrink-0 mt-1">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                      <Bot className="h-4 w-4 text-gray-600" />
-                    </div>
-                  </div>
-                  <div className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <LoadingSpinner size="sm" color="gray" />
-                      <span className="text-sm">Thinking...</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {isInitialLoading && (
-                <div className="flex justify-start items-start space-x-2">
-                  <div className="flex-shrink-0 mt-1">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                      <Bot className="h-4 w-4 text-gray-600" />
-                    </div>
-                  </div>
-                  <div className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <LoadingSpinner size="sm" color="gray" />
-                      <span className="text-sm">Thinking...</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input Form */}
-            <div className="border-t p-4">
-              <form onSubmit={sendMessage} className="flex space-x-4 items-center">
-                <input
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Type your response here..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={isLoading || isInitialLoading}
-                />
-                <button
-                  type="button"
-                  onClick={saveDraft}
-                  disabled={isSavingDraft || messages.length === 0 || conversation?.isCompleted}
-                  className={`p-2 h-fit rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${
-                    conversation?.isCompleted 
-                      ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
-                      : 'bg-green-600 text-white hover:bg-green-700'
+                  className={`max-w-[70%] px-4 py-2 rounded-2xl shadow text-base break-words ${
+                    message.role === 'user'
+                      ? 'bg-[#73cfd0] text-black rounded-br-md'
+                      : 'bg-[#0f2b2fcc] text-black rounded-bl-md'
                   }`}
-                  title={conversation?.isCompleted ? "Conversation completed - no need to save draft" : "Save Draft"}
                 >
-                  <Save className="h-4 w-4" />
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading || isInitialLoading || !inputMessage.trim()}
-                  className="p-2 h-fit rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </form>
-            </div>
+                  <p>{message.content}</p>
+                </div>
+                {message.role === 'user' && (
+                  <div className="flex-shrink-0 mb-1">
+                    <div className="w-8 h-8 bg-[#25d366] rounded-full flex items-center justify-center">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start items-end space-x-2">
+                <div className="flex-shrink-0 mb-1">
+                  <div className="w-8 h-8 bg-[#25d366] rounded-full flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-white" />
+                  </div>
+                </div>
+                <div className="bg-[#0f2b2fcc] text-black px-4 py-2 rounded-2xl shadow">
+                  <div className="flex items-center space-x-2">
+                    <LoadingSpinner size="sm" color="gray" />
+                    <span className="text-sm">Thinking...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            {isInitialLoading && (
+              <div className="flex justify-start items-end space-x-2">
+                <div className="flex-shrink-0 mb-1">
+                  <div className="w-8 h-8 bg-[#25d366] rounded-full flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-white" />
+                  </div>
+                </div>
+                <div className="bg-[#0f2b2fcc] text-black px-4 py-2 rounded-2xl shadow">
+                  <div className="flex items-center space-x-2">
+                    <LoadingSpinner size="sm" color="gray" />
+                    <span className="text-sm">Thinking...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+          {/* Input Form */}
+          <div className="border-t border-[#73cfd0] bg-white px-4 py-3 sticky bottom-0 z-10">
+            <form onSubmit={sendMessage} className="flex space-x-3 items-center">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Type a message"
+                className="flex-1 px-4 py-2 rounded-2xl bg-[#0f2b2fcc] text-black border-none focus:outline-none focus:ring-2 focus:ring-[#73cfd0] placeholder-[#73cfd0]"
+                disabled={isLoading || isInitialLoading}
+              />
+              <button
+                type="button"
+                onClick={saveDraft}
+                disabled={isSavingDraft || messages.length === 0 || conversation?.isCompleted}
+                className={`p-2 h-fit rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${
+                  conversation?.isCompleted 
+                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                    : 'bg-[#73cfd0] text-black hover:bg-[#0f2b2fcc]'
+                }`}
+                title={conversation?.isCompleted ? "Conversation completed - no need to save draft" : "Save Draft"}
+              >
+                <Save className="h-4 w-4" />
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading || isInitialLoading || !inputMessage.trim()}
+                className="p-2 h-fit rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center bg-[#73cfd0] hover:bg-[#0f2b2fcc] text-black"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
           </div>
         </div>
       </div>
