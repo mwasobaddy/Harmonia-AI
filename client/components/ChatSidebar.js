@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Plus, Search, Trash2, CheckSquare, Square, AlertTriangle } from 'lucide-react'
+import { Plus, Search, Trash2, CheckSquare, Square } from 'lucide-react'
 import Modal from './Modal'
 
 export default function ChatSidebar({ 
@@ -56,7 +56,7 @@ export default function ChatSidebar({
 
     setModalState({
       isOpen: true,
-      icon: AlertTriangle,
+      icon: Trash2,
       title: isSessionChat ? 'Permanently Delete Chat' : 'Soft Delete Chat',
       message: isSessionChat 
         ? `Are you sure you want to permanently delete "${conversation.title}"? This action cannot be undone.`
@@ -64,7 +64,7 @@ export default function ChatSidebar({
       confirmText: 'Delete',
       onConfirm: confirmAction,
       iconColor: 'text-red-500',
-      titleColor: 'text-red-900',
+      titleColor: 'text-red-500',
       confirmButtonColor: 'bg-red-500 hover:bg-red-600'
     })
   }
@@ -84,13 +84,13 @@ export default function ChatSidebar({
 
     setModalState({
       isOpen: true,
-      icon: AlertTriangle,
+      icon: Trash2,
       title: 'Delete Selected Chats',
       message: `Are you sure you want to delete ${selectedCount} conversation(s)?\n\nSession chats (${sessionChats.length}): permanently deleted\nDatabase chats (${dbChats.length}): soft deleted`,
       confirmText: 'Delete All',
       onConfirm: confirmAction,
       iconColor: 'text-red-500',
-      titleColor: 'text-red-900',
+      titleColor: 'text-red-500',
       confirmButtonColor: 'bg-red-500 hover:bg-red-600'
     })
   }
