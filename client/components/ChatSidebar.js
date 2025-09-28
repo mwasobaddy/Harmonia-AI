@@ -32,52 +32,6 @@ export default function ChatSidebar({
     confirmButtonColor: 'bg-blue-500 hover:bg-blue-600'
   })
 
-  const generateTitleFromMessage = (message) => {
-    if (!message || message.length === 0) return 'New Conversation'
-
-    // Clean the message: remove extra whitespace, punctuation at start/end
-    let cleanMessage = message.trim()
-    cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '')
-
-    // If message is too short, return it as is
-    if (cleanMessage.length <= 3) return cleanMessage || 'New Conversation'
-
-    // Take first 40 characters, but try to break at word boundaries
-    let title = cleanMessage.substring(0, 40)
-    const lastSpace = title.lastIndexOf(' ')
-
-    // If we have a space and it's not too close to the start, break there
-    if (lastSpace > 10) {
-      title = title.substring(0, lastSpace)
-    }
-
-    // Capitalize first letter
-    title = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase()
-
-    // Add ellipsis if truncated
-    if (title.length < cleanMessage.length) {
-      title += '...'
-    }
-
-    return title || 'New Conversation'
-  }
-
-  const getDisplayTitle = (conversation) => {
-    // First check if we have a persisted title in localStorage
-    const persistedTitle = localStorage.getItem(`conversation_title_${conversation.sessionId}`)
-    if (persistedTitle) {
-      return persistedTitle
-    }
-    
-    // If conversation has a proper title (not default), use it
-    if (conversation.title && conversation.title !== 'New Conversation' && conversation.title !== 'Conversation') {
-      return conversation.title
-    }
-    
-    // Otherwise, return the default title
-    return conversation.title || 'New Conversation'
-  }
-
   const handleSelectConversation = (conversationId) => {
     if (isSelectionMode) {
       setSelectedConversations(prev => {
@@ -92,6 +46,30 @@ export default function ChatSidebar({
     } else {
       onSelectConversation(conversationId)
     }
+  }
+
+  // Format conversation titles consistently with chat page
+  const formatTitleForDisplay = (message) => {
+    if (!message || message.length === 0) return 'New Conversation'
+
+    let cleanMessage = message.trim()
+    cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '')
+
+    if (cleanMessage.length <= 3) return cleanMessage || 'New Conversation'
+
+    let title = cleanMessage.substring(0, 40)
+    const lastSpace = title.lastIndexOf(' ')
+    if (lastSpace > 10) {
+      title = title.substring(0, lastSpace)
+    }
+
+    title = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase()
+
+    if (title.length < cleanMessage.length) {
+      title += '...'
+    }
+
+    return title || 'New Conversation'
   }
 
   const handleDeleteConversation = async (conversation) => {
@@ -215,7 +193,7 @@ export default function ChatSidebar({
             <div
               key={conversation.sessionId}
               className={`group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[#222d34] transition-colors ${
-                selectedId === conversation.sessionId ? 'bg-[#2a4a5a]' : 'hover:bg-[#222d34]'
+                selectedId === conversation.sessionId ? 'bg-[#202c33]' : 'hover:bg-[#222d34]'
               }`}
             >
               {isSelectionMode && (
@@ -231,10 +209,10 @@ export default function ChatSidebar({
                 onClick={() => !isSelectionMode && onSelectConversation(conversation.sessionId)}
               >
                 <div className="w-10 h-10 rounded-full bg-[#25d366] flex items-center justify-center text-white font-bold text-lg">
-                  {getDisplayTitle(conversation)?.charAt(0)?.toUpperCase() || 'C'}
+                  {formatTitleForDisplay(conversation.title)?.charAt(0)?.toUpperCase() || 'C'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-medium text-white truncate">{getDisplayTitle(conversation)}</h3>
+                  <h3 className="text-base font-medium text-white truncate">{formatTitleForDisplay(conversation.title)}</h3>
                   <p className="text-xs text-[#667781] mt-1">
                     {conversation.messageCount} messages
                     {conversation.type === 'draft' && ' • Draft'}
