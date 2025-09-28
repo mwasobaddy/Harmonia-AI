@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Layout from '../../components/Layout'
 import api from '../../lib/api'
-import { MessageCircle, Bot, User, Save, Send, ArrowLeft, Plus, Search } from 'lucide-react'
+import { MessageCircle, Bot, User, Save, Send, ArrowLeft, Plus, Search, Menu } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import ChatSidebar from '../../components/ChatSidebar'
 
@@ -21,6 +21,7 @@ export default function Chat() {
     const [isLoadingConversations, setIsLoadingConversations] = useState(true)
     const [selectedConversations, setSelectedConversations] = useState(new Set())
     const [isSelectionMode, setIsSelectionMode] = useState(false)
+    const [showMobileSidebar, setShowMobileSidebar] = useState(true)
     const messagesEndRef = useRef(null)
     const router = useRouter()
     const { id } = router.query
@@ -44,13 +45,45 @@ export default function Chat() {
             setIsLoadingConversations(false)
         }
     }
-    const filteredConversations = conversations.filter(conv =>
-        conv.title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const filteredConversations = useMemo(() => {
+        return conversations.filter(conv =>
+            conv.title.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    }, [conversations, searchTerm])
+    const generateTitleFromMessage = (message) => {
+        if (!message || message.length === 0) return 'New Conversation'
+
+        // Clean the message: remove extra whitespace, punctuation at start/end
+        let cleanMessage = message.trim()
+        cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '')
+
+        // If message is too short, return it as is
+        if (cleanMessage.length <= 3) return cleanMessage || 'New Conversation'
+
+        // Take first 40 characters, but try to break at word boundaries
+        let title = cleanMessage.substring(0, 40)
+        const lastSpace = title.lastIndexOf(' ')
+
+        // If we have a space and it's not too close to the start, break there
+        if (lastSpace > 10) {
+            title = title.substring(0, lastSpace)
+        }
+
+        // Capitalize first letter
+        title = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase()
+
+        // Add ellipsis if truncated
+        if (title.length < cleanMessage.length) {
+            title += '...'
+        }
+
+        return title || 'New Conversation'
+    }
 
     const handleSelectConversation = (conversationId) => {
         if (conversationId !== id) {
             router.push('/chat/' + conversationId)
+            setShowMobileSidebar(false) // Close sidebar on mobile after selection
         }
     }
 
@@ -68,6 +101,16 @@ export default function Chat() {
         try {
             const data = await api.initChat()
             if (data.sessionId) {
+                // Add the new conversation to the list immediately
+                const newConversation = {
+                    sessionId: data.sessionId,
+                    title: 'Starting consultation...',
+                    messageCount: 0,
+                    type: 'draft',
+                    isCompleted: false
+                }
+                setConversations(prev => [newConversation, ...prev])
+                setShowMobileSidebar(false) // Close sidebar on mobile after creating new conversation
                 router.push('/chat/' + data.sessionId)
             }
         } catch (error) { }
@@ -136,7 +179,10 @@ export default function Chat() {
     }, [messages])
 
     const loadConversation = async () => {
+        // Reset loading states to prevent interference from previous conversations
         setIsLoading(true)
+        setIsInitialLoading(false)
+        setMessages([])
         try {
             console.log('📚 [DEBUG] Loading conversation for id:', id)
             const data = await api.getConversation(id)
@@ -148,13 +194,35 @@ export default function Chat() {
 
             if (data.messages && data.messages.length > 0) {
                 setMessages(data.messages)
+
+                // Check if we need to generate a title from existing messages
+                const userMessages = data.messages.filter(msg => msg.role === 'user')
+                if (userMessages.length >= 2 && (!data.title || data.title === 'New Conversation' || data.title === 'Conversation')) {
+                    const secondUserMessage = userMessages[1].content
+                    const generatedTitle = generateTitleFromMessage(secondUserMessage)
+
+                    // Update conversation title in the conversations list
+                    setConversations(prev => prev.map(conv =>
+                        conv.sessionId === id
+                            ? { ...conv, title: generatedTitle }
+                            : conv
+                    ))
+                }
             } else {
-                // For new conversations, set welcome message
-                setMessages([{ role: 'assistant', content: "Hi, welcome to your consultation. This should take about 15 minutes to complete as I need important information. Are you ready to start?" }])
+                // For new conversations, show thinking state first
+                setIsInitialLoading(true)
+                setTimeout(() => {
+                    setMessages([{ role: 'assistant', content: "Hi, welcome to your consultation. This should take about 15 minutes to complete as I need important information. Are you ready to start?" }])
+                    setIsInitialLoading(false)
+                }, 1000)
             }
 
             // Set conversation details
-            setConversation({ sessionId: id, title: 'Conversation', isCompleted: data.isCompleted || false })
+            const userMessages = data.messages ? data.messages.filter(msg => msg.role === 'user') : []
+            const finalTitle = data.title && data.title !== 'New Conversation' && data.title !== 'Conversation'
+                ? data.title
+                : (userMessages.length >= 2 ? generateTitleFromMessage(userMessages[1].content) : 'Starting consultation...')
+            setConversation({ sessionId: id, title: finalTitle, isCompleted: data.isCompleted || false })
         } catch (error) {
             console.error('❌ [DEBUG] Error loading conversation:', error)
             setMessages([
@@ -162,7 +230,7 @@ export default function Chat() {
                 { role: 'user', content: 'Error loading conversation' },
                 { role: 'assistant', content: 'Sorry, we couldn\'t load the conversation history. Please try again.' }
             ])
-            setConversation({ sessionId: id, title: 'Conversation', isCompleted: false })
+            setConversation({ sessionId: id, title: 'Starting consultation...', isCompleted: false })
         } finally {
             setIsLoading(false)
         }
@@ -177,6 +245,20 @@ export default function Chat() {
         setMessages(newMessages)
         setInputMessage('')
         setIsLoading(true)
+
+        // Check if this is the second user message to generate a title
+        const userMessageCount = newMessages.filter(msg => msg.role === 'user').length
+        if (userMessageCount === 2) {
+            const newTitle = generateTitleFromMessage(inputMessage)
+            // Update conversation title in the conversations list
+            setConversations(prev => prev.map(conv =>
+                conv.sessionId === conversation.sessionId
+                    ? { ...conv, title: newTitle }
+                    : conv
+            ))
+            // Update local conversation state
+            setConversation(prev => ({ ...prev, title: newTitle }))
+        }
 
         console.log('📤 [DEBUG] Frontend sending message:', {
             message: inputMessage,
@@ -261,39 +343,37 @@ export default function Chat() {
             <Layout title="Chat - Harmonia-AI" description="Your chat conversation">
                 <div className="h-full min-h-0 flex-1 flex flex-row bg-[#111b21]">
                     {/* Sidebar */}
-                    <div className="hidden md:flex w-[380px] max-w-full flex-col min-h-0 bg-[#202c33] border-r border-[#222d34]">
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-[#222d34] bg-[#202c33]">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-[#25d366] flex items-center justify-center text-white font-bold text-lg">U</div>
-                                <span className="text-white font-semibold text-lg">Chats</span>
-                            </div>
-                            <button
-                                className="w-9 h-9 flex items-center justify-center rounded-full bg-[#25d366] hover:bg-[#1fa855] transition-colors"
-                                title="New Chat"
-                                disabled
-                            >
-                                <Plus className="h-5 w-5 text-white" />
-                            </button>
-                        </div>
-                        <div className="px-4 py-2 bg-[#111b21] border-b border-[#222d34]">
-                            <div className="relative">
-                                <Search className="h-4 w-4 absolute left-3 top-3 text-[#667781]" />
-                                <input
-                                    type="text"
-                                    placeholder="Search or start new chat"
-                                    className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#2a3942] text-white border-none focus:outline-none focus:ring-2 focus:ring-[#25d366] placeholder-[#667781]"
-                                    disabled
-                                />
-                            </div>
-                        </div>
-                        <div className="flex-1 overflow-y-auto bg-[#111b21] flex items-center justify-center">
-                            <LoadingSpinner size="lg" />
-                        </div>
-                    </div>
-                    {/* Main area */}
-                    <div className="flex-1 flex flex-col min-h-0 bg-[#222d34]">
+                                    {/* Sidebar */}
+                <div className="w-full md:w-[380px] max-w-full md:max-w-[380px] flex flex-col min-h-0 bg-[#0f2b2fcc] border-r border-[#222d34]">
+                    <ChatSidebar
+                        conversations={filteredConversations}
+                        onSelectConversation={handleSelectConversation}
+                        selectedId={id}
+                        onNewConversation={handleNewConversation}
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        loading={isLoadingConversations}
+                        selectedConversations={selectedConversations}
+                        setSelectedConversations={setSelectedConversations}
+                        isSelectionMode={isSelectionMode}
+                        setIsSelectionMode={setIsSelectionMode}
+                        onDeleteConversation={handleDeleteConversation}
+                        onDeleteSelectedConversations={handleDeleteSelectedConversations}
+                    />
+                </div>
+                    {/* Main area - hidden on mobile when no conversation */}
+                    <div className="hidden md:flex flex-1 flex flex-col min-h-0 bg-[#222d34]">
                         <div className="flex-1 flex items-center justify-center">
-                            <LoadingSpinner size="lg" />
+                            <div className="text-center text-white">
+                                <h2 className="text-2xl font-bold mb-4">Welcome to Harmonia-AI</h2>
+                                <p className="text-gray-300 mb-6">Select a conversation from the sidebar to get started</p>
+                                <button
+                                    onClick={handleNewConversation}
+                                    className="px-6 py-3 bg-[#25d366] hover:bg-[#1fa855] text-white rounded-lg font-medium transition-colors"
+                                >
+                                    Start New Conversation
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -304,8 +384,15 @@ export default function Chat() {
     return (
         <Layout title="Chat - Harmonia-AI" description="Your chat conversation">
             <div className="h-full flex min-h-0 flex-1 flex-row bg-[#0f2b2fcc]">
-                {/* Sidebar (desktop only) */}
-                <div className="hidden md:flex">
+                {/* Mobile sidebar overlay */}
+                {showMobileSidebar && (
+                    <div 
+                        className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-10"
+                        onClick={() => setShowMobileSidebar(false)}
+                    />
+                )}
+                {/* Sidebar (desktop always visible, mobile toggleable) */}
+                <div className={`md:flex ${showMobileSidebar ? 'flex' : 'hidden'} md:relative absolute inset-y-0 left-0 z-20`}>
                     <ChatSidebar
                         conversations={filteredConversations}
                         onSelectConversation={handleSelectConversation}
@@ -326,6 +413,13 @@ export default function Chat() {
                 <div className="flex-1 flex flex-col min-h-0 bg-[#0f2b2fcc]">
                     {/* Chat header */}
                     <div className="flex items-center gap-3 px-4 py-3 border-b border-[#73cfd0] bg-[#0f2b2fcc] sticky top-0 z-10">
+                        <button
+                            onClick={() => setShowMobileSidebar(!showMobileSidebar)}
+                            className="md:hidden flex items-center justify-center w-8 h-8 rounded-full bg-[#2a4a5a] hover:bg-[#73cfd0] transition-colors"
+                            title="Toggle Sidebar"
+                        >
+                            <Menu className="h-4 w-4 text-[#73cfd0] hover:text-black" />
+                        </button>
                         <button
                             onClick={() => router.push('/chat')}
                             className="md:hidden flex items-center gap-2 text-[#73cfd0] hover:text-[#0f2b2fcc]"
@@ -348,7 +442,7 @@ export default function Chat() {
                         {messages.map((message, index) => (
                             <div
                                 key={index}
-                                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} items-end`}
+                                className={`flex space-x-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'} items-start`}
                             >
                                 {message.role === 'assistant' && (
                                     <div className="flex-shrink-0 mb-1">
@@ -360,7 +454,7 @@ export default function Chat() {
                                 <div
                                     className={`max-w-[70%] px-4 py-2 rounded-2xl shadow text-base break-words ${message.role === 'user'
                                             ? 'bg-[#73cfd0] text-black rounded-br-md'
-                                            : 'bg-[#0f2b2fcc] text-black rounded-bl-md'
+                                            : 'bg-[#2a4a5a] text-white rounded-bl-md'
                                         }`}
                                 >
                                     <p>{message.content}</p>
@@ -375,30 +469,30 @@ export default function Chat() {
                             </div>
                         ))}
                         {isLoading && (
-                            <div className="flex justify-start items-end space-x-2">
+                            <div className="flex justify-start items-start space-x-4">
                                 <div className="flex-shrink-0 mb-1">
                                     <div className="w-8 h-8 bg-[#25d366] rounded-full flex items-center justify-center">
                                         <Bot className="h-4 w-4 text-white" />
                                     </div>
                                 </div>
-                                <div className="bg-[#0f2b2fcc] text-black px-4 py-2 rounded-2xl shadow">
+                                <div className="bg-[#2a4a5a] text-white px-4 py-2 rounded-2xl shadow">
                                     <div className="flex items-center space-x-2">
-                                        <LoadingSpinner size="sm" color="gray" />
+                                        <LoadingSpinner size="sm" color="white" />
                                         <span className="text-sm">Thinking...</span>
                                     </div>
                                 </div>
                             </div>
                         )}
                         {isInitialLoading && (
-                            <div className="flex justify-start items-end space-x-2">
+                            <div className="flex justify-start items-start space-x-4">
                                 <div className="flex-shrink-0 mb-1">
                                     <div className="w-8 h-8 bg-[#25d366] rounded-full flex items-center justify-center">
                                         <Bot className="h-4 w-4 text-white" />
                                     </div>
                                 </div>
-                                <div className="bg-[#0f2b2fcc] text-black px-4 py-2 rounded-2xl shadow">
+                                <div className="bg-[#2a4a5a] text-white px-4 py-2 rounded-2xl shadow">
                                     <div className="flex items-center space-x-2">
-                                        <LoadingSpinner size="sm" color="gray" />
+                                        <LoadingSpinner size="sm" color="white" />
                                         <span className="text-sm">Thinking...</span>
                                     </div>
                                 </div>
@@ -407,34 +501,42 @@ export default function Chat() {
                         <div ref={messagesEndRef} />
                     </div>
                     {/* Input Form */}
-                    <div className="border-t border-[#73cfd0] bg-[#0f2b2fcc] px-4 py-3 sticky bottom-0 z-10">
+                    <div className="border-t border-[#73cfd0] bg-[#0f2b2fcc] px-4 py-4 sticky bottom-0 z-10 shadow-lg">
                         <form onSubmit={sendMessage} className="flex space-x-3 items-center">
-                            <input
-                                type="text"
-                                value={inputMessage}
-                                onChange={(e) => setInputMessage(e.target.value)}
-                                placeholder="Type a message"
-                                className="flex-1 px-4 py-2 rounded-2xl bg-[#0f2b2fcc] text-black border-none focus:outline-none focus:ring-2 focus:ring-[#73cfd0] placeholder-[#73cfd0]"
-                                disabled={isLoading || isInitialLoading}
-                            />
+                            <div className="flex-1 relative">
+                                <input
+                                    type="text"
+                                    value={inputMessage}
+                                    onChange={(e) => setInputMessage(e.target.value)}
+                                    placeholder="Type a message..."
+                                    className="w-full px-4 py-3 pr-12 rounded-2xl bg-[#1a3a4a] text-white border-2 border-[#73cfd0]/30 focus:outline-none focus:border-[#73cfd0] focus:ring-2 focus:ring-[#73cfd0]/20 placeholder-[#73cfd0]/70 transition-all duration-200 shadow-md"
+                                    disabled={isLoading || isInitialLoading}
+                                />
+                                {inputMessage.trim() && (
+                                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#73cfd0] text-sm opacity-70">
+                                        Press Enter to send
+                                    </div>
+                                )}
+                            </div>
                             <button
                                 type="button"
                                 onClick={saveDraft}
                                 disabled={isSavingDraft || messages.length === 0 || conversation?.isCompleted}
-                                className={`p-2 h-fit rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${conversation?.isCompleted
-                                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                                        : 'bg-[#73cfd0] text-black hover:bg-[#0f2b2fcc]'
-                                    }`}
+                                className={`p-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 shadow-md ${
+                                    conversation?.isCompleted
+                                        ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
+                                        : 'bg-[#2a4a5a] text-[#73cfd0] hover:bg-[#73cfd0] hover:text-black hover:shadow-lg hover:scale-105'
+                                }`}
                                 title={conversation?.isCompleted ? "Conversation completed - no need to save draft" : "Save Draft"}
                             >
-                                <Save className="h-4 w-4" />
+                                <Save className={`h-5 w-5 ${isSavingDraft ? 'animate-pulse' : ''}`} />
                             </button>
                             <button
                                 type="submit"
                                 disabled={isLoading || isInitialLoading || !inputMessage.trim()}
-                                className="p-2 h-fit rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center bg-[#73cfd0] hover:bg-[#0f2b2fcc] text-black"
+                                className="p-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center bg-[#73cfd0] hover:bg-[#5ba8a0] text-black transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 disabled:hover:scale-100"
                             >
-                                <Send className="h-4 w-4" />
+                                <Send className="h-5 w-5" />
                             </button>
                         </form>
                     </div>
