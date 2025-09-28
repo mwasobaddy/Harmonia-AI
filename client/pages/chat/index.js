@@ -5,8 +5,9 @@ import toast from 'react-hot-toast'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import Layout from '../../components/Layout'
 import api from '../../lib/api'
-import { MessageCircle, Plus, Search, Trash2, CheckSquare, Square, Bot, User, Save, ArrowLeft, Send } from 'lucide-react'
+import { MessageCircle, Plus, Search, Bot, User, Save, ArrowLeft, Send } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import ChatSidebar from '../../components/ChatSidebar'
 
 export default function Chat() {
   const [conversations, setConversations] = useState([])
@@ -19,7 +20,6 @@ export default function Chat() {
   const [isSavingDraft, setIsSavingDraft] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedConversations, setSelectedConversations] = useState(new Set())
-  const [isMobileChatView, setIsMobileChatView] = useState(false)
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const messagesEndRef = useRef(null)
   const router = useRouter()
@@ -206,7 +206,7 @@ export default function Chat() {
       }, remainingTime)
     } catch (error) {
       console.error('❌ [DEBUG] Error sending message:', error)
-      
+
       // Calculate remaining time to show loading for at least 2 seconds
       const elapsedTime = Date.now() - startTime
       const remainingTime = Math.max(0, 2000 - elapsedTime)
@@ -257,36 +257,44 @@ export default function Chat() {
     conv.title.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleDeleteConversation = async (conversationId) => {
+  const handleDeleteConversation = async (conversationId, isSessionChat) => {
     try {
-      await api.deleteConversation(conversationId)
+      if (isSessionChat) {
+        // Permanent delete for session chats
+        await api.deleteConversation(conversationId)
+      } else {
+        // Soft delete for database chats - assuming there's a soft delete API
+        await api.softDeleteConversation(conversationId)
+      }
       setConversations(prev => prev.filter(conv => conv.sessionId !== conversationId))
       if (selectedConversation?.sessionId === conversationId) {
         setSelectedConversation(null)
         setMessages([])
       }
-      toast.success('Conversation deleted successfully')
+      toast.success(isSessionChat ? 'Conversation permanently deleted' : 'Conversation soft deleted')
     } catch (error) {
       console.error('Error deleting conversation:', error)
       toast.error('Failed to delete conversation')
     }
   }
 
-  const handleDeleteSelectedConversations = async () => {
+  const handleDeleteSelectedConversations = async (selectedIds, sessionChatIds, dbChatIds) => {
     try {
-      const deletePromises = Array.from(selectedConversations).map(id => api.deleteConversation(id))
-      await Promise.all(deletePromises)
+      // Permanent delete session chats
+      const sessionPromises = sessionChatIds.map(id => api.deleteConversation(id))
+      // Soft delete database chats
+      const dbPromises = dbChatIds.map(id => api.softDeleteConversation(id))
       
-      setConversations(prev => prev.filter(conv => !selectedConversations.has(conv.sessionId)))
+      await Promise.all([...sessionPromises, ...dbPromises])
       
-      if (selectedConversation && selectedConversations.has(selectedConversation.sessionId)) {
+      setConversations(prev => prev.filter(conv => !selectedIds.includes(conv.sessionId)))
+      
+      if (selectedConversation && selectedIds.includes(selectedConversation.sessionId)) {
         setSelectedConversation(null)
         setMessages([])
       }
       
-      setSelectedConversations(new Set())
-      setIsSelectionMode(false)
-      toast.success(`${selectedConversations.size} conversation(s) deleted successfully`)
+      toast.success(`${selectedIds.length} conversation(s) deleted successfully`)
     } catch (error) {
       console.error('Error deleting conversations:', error)
       toast.error('Failed to delete selected conversations')
@@ -294,111 +302,33 @@ export default function Chat() {
   }
 
   const handleSelectConversation = (conversationId) => {
-    if (isSelectionMode) {
-      setSelectedConversations(prev => {
-        const newSet = new Set(prev)
-        if (newSet.has(conversationId)) {
-          newSet.delete(conversationId)
-        } else {
-          newSet.add(conversationId)
-        }
-        return newSet
-      })
-    } else {
-      // Navigate to the chat page for this conversation
-      router.push('/chat/' + conversationId)
-    }
-  }
-
-  const toggleSelectionMode = () => {
-    setIsSelectionMode(!isSelectionMode)
-    setSelectedConversations(new Set())
+    // Navigate to the chat page for this conversation
+    router.push('/chat/' + conversationId)
   }
 
   return (
     <Layout title="Chat - Harmonia-AI" description="Your chat conversations">
-  <div className="h-full flex min-h-0 flex-1 flex-row bg-[#0f2b2fcc]">
-        {/* Sidebar: always visible, main area hidden on mobile */}
-        <div
-          className={
-            'w-full md:w-[380px] max-w-full md:max-w-[380px] flex flex-col min-h-0 bg-white border-r border-[#73cfd0]'
-          }
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#73cfd0] bg-white">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#73cfd0] flex items-center justify-center text-black font-bold text-lg">U</div>
-              <span className="text-black font-semibold text-lg">Chats</span>
-            </div>
-            <button
-              onClick={createNewConversation}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-[#73cfd0] hover:bg-[#0f2b2fcc] transition-colors text-black"
-              title="New Chat"
-            >
-              <Plus className="h-5 w-5" />
-            </button>
-          </div>
-          {/* Search */}
-          <div className="px-4 py-2 bg-[#0f2b2fcc] border-b border-[#73cfd0]">
-            <div className="relative">
-              <Search className="h-4 w-4 absolute left-3 top-3 text-[#73cfd0]" />
-              <input
-                type="text"
-                placeholder="Search or start new chat"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-lg bg-white text-black border-none focus:outline-none focus:ring-2 focus:ring-[#73cfd0] placeholder-[#73cfd0]"
-              />
-            </div>
-          </div>
-          {/* Chat List */}
-          <div className="flex-1 overflow-y-auto bg-[#0f2b2fcc]">
-            {isLoadingConversations ? (
-              <div className="flex items-center justify-center py-8">
-                <LoadingSpinner size="sm" />
-              </div>
-            ) : filteredConversations.length === 0 ? (
-              <div className="text-center py-8 text-[#667781]">
-                <MessageCircle className="h-12 w-12 mx-auto mb-4 text-[#73cfd0]" />
-                <p className="text-black">No conversations yet</p>
-                <button
-                  onClick={createNewConversation}
-                  className="mt-2 text-[#73cfd0] hover:text-[#0f2b2fcc] font-medium"
-                >
-                  Start your first conversation
-                </button>
-              </div>
-            ) : (
-              filteredConversations.map((conversation) => (
-                <div
-                  key={conversation.sessionId}
-                  onClick={() => handleSelectConversation(conversation.sessionId)}
-                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[#73cfd0] transition-colors ${
-                    selectedConversation?.sessionId === conversation.sessionId ? 'bg-[#73cfd0]' : 'hover:bg-[#0f2b2fcc]'
-                  }`}
-                >
-                  <div className="w-10 h-10 rounded-full bg-[#73cfd0] flex items-center justify-center text-black font-bold text-lg">
-                    {conversation.title?.charAt(0)?.toUpperCase() || 'C'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-medium text-black truncate">{conversation.title}</h3>
-                    <p className="text-xs text-[#0f2b2fcc] mt-1">
-                      {conversation.messageCount} messages
-                      {conversation.type === 'draft' && ' • Draft'}
-                      {conversation.isCompleted && conversation.type !== 'draft' && ' • Completed'}
-                    </p>
-                  </div>
-                  <div className={`w-2 h-2 rounded-full ${
-                    conversation.type === 'draft' ? 'bg-yellow-500' :
-                    conversation.isCompleted ? 'bg-green-500' : 'bg-[#73cfd0]'
-                  }`} />
-                </div>
-              ))
-            )}
-          </div>
+      <div className="h-full flex min-h-0 flex-1 flex-row bg-[#0f2b2fcc]">
+        {/* Sidebar: hidden on mobile, visible on desktop */}
+        <div className="hidden md:flex">
+          <ChatSidebar
+            conversations={filteredConversations}
+            onSelectConversation={handleSelectConversation}
+            selectedId={selectedConversation?.sessionId}
+            onNewConversation={createNewConversation}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            loading={isLoadingConversations}
+            selectedConversations={selectedConversations}
+            setSelectedConversations={setSelectedConversations}
+            isSelectionMode={isSelectionMode}
+            setIsSelectionMode={setIsSelectionMode}
+            onDeleteConversation={handleDeleteConversation}
+            onDeleteSelectedConversations={handleDeleteSelectedConversations}
+          />
         </div>
-        {/* Main Area: hidden on mobile, visible on desktop */}
-  <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-[#0f2b2fcc] min-h-0">
+        {/* Main Area: visible on all screens */}
+        <div className="flex-1 flex flex-col items-center justify-center bg-[#0f2b2fcc] min-h-0">
           <div className="flex flex-col items-center justify-center">
             <div className="w-32 h-32 rounded-full bg-[#73cfd0] flex items-center justify-center mb-6">
               <MessageCircle className="h-16 w-16 text-black" />
