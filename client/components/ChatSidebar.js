@@ -32,6 +32,48 @@ export default function ChatSidebar({
     confirmButtonColor: 'bg-blue-500 hover:bg-blue-600'
   })
 
+  const generateTitleFromMessage = (message) => {
+    if (!message || message.length === 0) return 'New Conversation'
+
+    // Clean the message: remove extra whitespace, punctuation at start/end
+    let cleanMessage = message.trim()
+    cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '')
+
+    // If message is too short, return it as is
+    if (cleanMessage.length <= 3) return cleanMessage || 'New Conversation'
+
+    // Take first 40 characters, but try to break at word boundaries
+    let title = cleanMessage.substring(0, 40)
+    const lastSpace = title.lastIndexOf(' ')
+
+    // If we have a space and it's not too close to the start, break there
+    if (lastSpace > 10) {
+      title = title.substring(0, lastSpace)
+    }
+
+    // Capitalize first letter
+    title = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase()
+
+    // Add ellipsis if truncated
+    if (title.length < cleanMessage.length) {
+      title += '...'
+    }
+
+    return title || 'New Conversation'
+  }
+
+  const getDisplayTitle = (conversation) => {
+    // If conversation has a proper title (not default), use it
+    if (conversation.title && conversation.title !== 'New Conversation' && conversation.title !== 'Conversation') {
+      return conversation.title
+    }
+    
+    // Otherwise, try to generate from the last user message if available
+    // For now, we'll use the conversation title as-is since we don't have message content here
+    // This could be enhanced later by fetching message preview from API
+    return conversation.title || 'New Conversation'
+  }
+
   const handleSelectConversation = (conversationId) => {
     if (isSelectionMode) {
       setSelectedConversations(prev => {
@@ -136,7 +178,7 @@ export default function ChatSidebar({
         </div>
       </div>
       {/* Search */}
-      <div className="px-4 py-2 bg-[#111b21] border-b border-[#222d34]">
+      <div className="px-4 py-2 bg-[#0f2b2fcc] border-b border-[#222d34]">
         <div className="relative">
           <Search className="h-4 w-4 absolute left-3 top-3 text-[#667781]" />
           <input
@@ -149,7 +191,7 @@ export default function ChatSidebar({
         </div>
       </div>
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto bg-[#111b21]">
+      <div className="flex-1 overflow-y-auto bg-[#0f2b2fcc]">
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <span className="text-[#667781]">Loading...</span>
@@ -185,10 +227,10 @@ export default function ChatSidebar({
                 onClick={() => !isSelectionMode && onSelectConversation(conversation.sessionId)}
               >
                 <div className="w-10 h-10 rounded-full bg-[#25d366] flex items-center justify-center text-white font-bold text-lg">
-                  {conversation.title?.charAt(0)?.toUpperCase() || 'C'}
+                  {getDisplayTitle(conversation)?.charAt(0)?.toUpperCase() || 'C'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-medium text-white truncate">{conversation.title}</h3>
+                  <h3 className="text-base font-medium text-white truncate">{getDisplayTitle(conversation)}</h3>
                   <p className="text-xs text-[#667781] mt-1">
                     {conversation.messageCount} messages
                     {conversation.type === 'draft' && ' • Draft'}
