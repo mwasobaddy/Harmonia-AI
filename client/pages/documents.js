@@ -102,7 +102,7 @@ export default function Documents() {
         <Head>
           <title>Documents - Harmonia-AI</title>
         </Head>
-        <div className="min-h-screen bg-gray-50 md:pb-0 flex flex-col">
+        <div className="min-h-screen bg-[#0f2b2fcc] md:pb-0 flex flex-col">
           <Header />
           <div className="flex-1 flex items-center justify-center">
             <LoadingSpinner size="lg" />
@@ -119,22 +119,22 @@ export default function Documents() {
         description="Your chat conversations"
       >
 
-      <div className="max-w-7xl h-full min-h-0 flex-1 flex flex-col bg-gray-50 items-center">
+  <div className="max-w-7xl h-full min-h-0 flex-1 flex flex-col bg-[#0f2b2fcc] items-center">
         <div className="md:px-6 lg:px-8 flex-1 flex justify-center min-h-0">
           <div className={`flex overflow-hidden w-full flex-1 min-h-0 flex-col`}>
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">Your Documents</h1>
-              <p className="mt-2 text-gray-600">View and download your mitigation statements and documents.</p>
+              <h1 className="text-3xl font-bold text-white">Your Documents</h1>
+              <p className="mt-2 text-[#73cfd0]">View and download your mitigation statements and documents.</p>
             </div>
 
             {documents.length === 0 ? (
               <div className="bg-white shadow rounded-lg p-8 text-center">
-                <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No documents yet</h3>
-                <p className="text-gray-500 mb-4">Complete a consultation to generate your first mitigation statement.</p>
+                <FileText className="h-16 w-16 mx-auto mb-4 text-[#73cfd0]" />
+                <h3 className="text-lg font-medium text-black mb-2">No documents yet</h3>
+                <p className="text-[#0f2b2fcc] mb-4">Complete a consultation to generate your first mitigation statement.</p>
                 <button
                   onClick={() => router.push('/chat')}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 bg-[#73cfd0] text-black rounded-lg hover:bg-[#0f2b2fcc] hover:text-white"
                 >
                   Start a Consultation
                 </button>
@@ -147,10 +147,10 @@ export default function Documents() {
                       <div className="flex items-start space-x-4">
                         {getStatusIcon(document.status)}
                         <div className="flex-1">
-                          <h3 className="text-lg font-medium text-gray-900">
+                          <h3 className="text-lg font-medium text-black">
                             Mitigation Statement
                           </h3>
-                          <p className="text-sm text-gray-500 mt-1">
+                          <p className="text-sm text-[#73cfd0] mt-1">
                             Created on {new Date(document.createdAt).toLocaleDateString()}
                           </p>
                           <div className="flex items-center mt-2">
@@ -158,7 +158,7 @@ export default function Documents() {
                               document.status === 'PENDING_REVIEW' ? 'bg-yellow-100 text-yellow-800' :
                               document.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
                               document.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                              'bg-gray-100 text-gray-800'
+                              'bg-[#73cfd0] text-black'
                             }`}>
                               {getStatusText(document.status)}
                             </span>
@@ -168,7 +168,7 @@ export default function Documents() {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => setSelectedDocument(selectedDocument?.id === document.id ? null : document)}
-                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                          className="p-2 text-[#73cfd0] hover:text-[#0f2b2fcc] transition-colors"
                           title="View Details"
                         >
                           <Eye className="h-5 w-5" />
@@ -176,7 +176,7 @@ export default function Documents() {
                         {document.status === 'APPROVED' && (
                           <button
                             onClick={() => downloadDocument(document.id, `mitigation-statement-${document.id}.txt`)}
-                            className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                            className="p-2 text-[#73cfd0] hover:text-[#0f2b2fcc] transition-colors"
                             title="Download"
                           >
                             <Download className="h-5 w-5" />
@@ -186,10 +186,10 @@ export default function Documents() {
                     </div>
 
                     {selectedDocument?.id === document.id && (
-                      <div className="mt-4 pt-4 border-t border-gray-200">
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">Document Preview</h4>
-                        <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
-                          <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
+                      <div className="mt-4 pt-4 border-t border-[#73cfd0]">
+                        <h4 className="text-sm font-medium text-black mb-2">Document Preview</h4>
+                        <div className="bg-[#73cfd0] rounded-lg p-4 max-h-64 overflow-y-auto">
+                          <pre className="text-sm text-black whitespace-pre-wrap font-sans">
                             {document.content.length > 1000
                               ? document.content.substring(0, 1000) + '...'
                               : document.content
