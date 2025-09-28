@@ -21,7 +21,6 @@ export default function Chat() {
     const [isLoadingConversations, setIsLoadingConversations] = useState(true)
     const [selectedConversations, setSelectedConversations] = useState(new Set())
     const [isSelectionMode, setIsSelectionMode] = useState(false)
-    const [showMobileSidebar, setShowMobileSidebar] = useState(true)
     const messagesEndRef = useRef(null)
     const router = useRouter()
     const { id } = router.query
@@ -83,7 +82,6 @@ export default function Chat() {
     const handleSelectConversation = (conversationId) => {
         if (conversationId !== id) {
             router.push('/chat/' + conversationId)
-            setShowMobileSidebar(false) // Close sidebar on mobile after selection
         }
     }
 
@@ -110,7 +108,6 @@ export default function Chat() {
                     isCompleted: false
                 }
                 setConversations(prev => [newConversation, ...prev])
-                setShowMobileSidebar(false) // Close sidebar on mobile after creating new conversation
                 router.push('/chat/' + data.sessionId)
             }
         } catch (error) { }
@@ -343,24 +340,23 @@ export default function Chat() {
             <Layout title="Chat - Harmonia-AI" description="Your chat conversation">
                 <div className="h-full min-h-0 flex-1 flex flex-row bg-[#111b21]">
                     {/* Sidebar */}
-                                    {/* Sidebar */}
-                <div className="w-full md:w-[380px] max-w-full md:max-w-[380px] flex flex-col min-h-0 bg-[#0f2b2fcc] border-r border-[#222d34]">
-                    <ChatSidebar
-                        conversations={filteredConversations}
-                        onSelectConversation={handleSelectConversation}
-                        selectedId={id}
-                        onNewConversation={handleNewConversation}
-                        searchTerm={searchTerm}
-                        setSearchTerm={setSearchTerm}
-                        loading={isLoadingConversations}
-                        selectedConversations={selectedConversations}
-                        setSelectedConversations={setSelectedConversations}
-                        isSelectionMode={isSelectionMode}
-                        setIsSelectionMode={setIsSelectionMode}
-                        onDeleteConversation={handleDeleteConversation}
-                        onDeleteSelectedConversations={handleDeleteSelectedConversations}
-                    />
-                </div>
+                    <div className="w-full md:w-[380px] max-w-full md:max-w-[380px] flex flex-col min-h-0 bg-[#0f2b2fcc] border-r border-[#222d34] flex-1">
+                        <ChatSidebar
+                            conversations={filteredConversations}
+                            onSelectConversation={handleSelectConversation}
+                            selectedId={id}
+                            onNewConversation={handleNewConversation}
+                            searchTerm={searchTerm}
+                            setSearchTerm={setSearchTerm}
+                            loading={isLoadingConversations}
+                            selectedConversations={selectedConversations}
+                            setSelectedConversations={setSelectedConversations}
+                            isSelectionMode={isSelectionMode}
+                            setIsSelectionMode={setIsSelectionMode}
+                            onDeleteConversation={handleDeleteConversation}
+                            onDeleteSelectedConversations={handleDeleteSelectedConversations}
+                        />
+                    </div>
                     {/* Main area - hidden on mobile when no conversation */}
                     <div className="hidden md:flex flex-1 flex flex-col min-h-0 bg-[#222d34]">
                         <div className="flex-1 flex items-center justify-center">
@@ -384,15 +380,8 @@ export default function Chat() {
     return (
         <Layout title="Chat - Harmonia-AI" description="Your chat conversation">
             <div className="h-full flex min-h-0 flex-1 flex-row bg-[#0f2b2fcc]">
-                {/* Mobile sidebar overlay */}
-                {showMobileSidebar && (
-                    <div 
-                        className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-10"
-                        onClick={() => setShowMobileSidebar(false)}
-                    />
-                )}
                 {/* Sidebar (desktop always visible, mobile toggleable) */}
-                <div className={`md:flex ${showMobileSidebar ? 'flex' : 'hidden'} md:relative absolute inset-y-0 left-0 z-20`}>
+                <div className={`hidden md:flex md:relative absolute inset-y-0 left-0 z-20`}>
                     <ChatSidebar
                         conversations={filteredConversations}
                         onSelectConversation={handleSelectConversation}
@@ -414,8 +403,7 @@ export default function Chat() {
                     {/* Chat header */}
                     <div className="flex items-center gap-3 px-4 py-3 border-b border-[#73cfd0] bg-[#0f2b2fcc] sticky top-0 z-10">
                         <button
-                            onClick={() => setShowMobileSidebar(!showMobileSidebar)}
-                            className="md:hidden flex items-center justify-center w-8 h-8 rounded-full bg-[#2a4a5a] hover:bg-[#73cfd0] transition-colors"
+                            className="hidden flex items-center justify-center w-8 h-8 rounded-full bg-[#2a4a5a] hover:bg-[#73cfd0] transition-colors"
                             title="Toggle Sidebar"
                         >
                             <Menu className="h-4 w-4 text-[#73cfd0] hover:text-black" />

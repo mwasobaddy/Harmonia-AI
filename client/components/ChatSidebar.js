@@ -100,7 +100,7 @@ export default function ChatSidebar({
     setSelectedConversations(new Set())
   }
   return (
-    <div className="w-full md:w-[380px] max-w-full md:max-w-[380px] flex flex-col min-h-0 bg-[#0f2b2fcc] border-r border-[#222d34]">
+    <div className="w-full md:w-[380px] max-w-full md:max-w-[380px] flex flex-col min-h-0 bg-[#0f2b2fcc] border-r border-[#222d34] flex-1">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#222d34] bg-[#202c33]">
         <div className="flex items-center gap-3">
