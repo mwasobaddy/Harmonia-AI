@@ -2,11 +2,11 @@ import { useState, useRef, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
-import LoadingSpinner from '../components/LoadingSpinner'
-import Layout from '../components/Layout'
-import api from '../lib/api'
+import LoadingSpinner from '../../components/LoadingSpinner'
+import Layout from '../../components/Layout'
+import api from '../../lib/api'
 import { MessageCircle, Plus, Search, Trash2, CheckSquare, Square, Bot, User, Save, ArrowLeft, Send } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 
 export default function Chat() {
   const [conversations, setConversations] = useState([])
