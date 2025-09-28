@@ -316,147 +316,95 @@ export default function Chat() {
   }
 
   return (
-    <Layout
-      title="Chat - Harmonia-AI"
-      description="Your chat conversations"
-    >
-
-      <div className="h-full min-h-0 flex-1 flex flex-col bg-gray-50">
-        <div className="w-full md:px-6 lg:px-8 flex-1 flex justify-center min-h-0">
-          <div className={`flex overflow-hidden w-full flex-1 min-h-0`}>
-            {/* Conversations List - Full Width */}
-            <div className="w-full border-r border-gray-200 flex flex-col min-h-0">
-              {/* Sidebar Header */}
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    {isSelectionMode ? `${selectedConversations.size} Selected` : 'Conversations'}
-                  </h2>
-                  <div className="flex items-center space-x-2">
-                    {isSelectionMode ? (
-                      <>
-                        <button
-                          onClick={handleDeleteSelectedConversations}
-                          disabled={selectedConversations.size === 0}
-                          className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                          title="Delete Selected"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={toggleSelectionMode}
-                          className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                          title="Cancel Selection"
-                        >
-                          ✕
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={toggleSelectionMode}
-                          className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                          title="Select Multiple"
-                        >
-                          <CheckSquare className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={createNewConversation}
-                          className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                          title="New Conversation"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Search */}
-                <div className="relative">
-                  <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search conversations..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Conversations List */}
-              <div className="flex-1 overflow-y-auto">
-                {isLoadingConversations ? (
-                  <div className="flex items-center justify-center py-8">
-                    <LoadingSpinner size="sm" />
-                  </div>
-                ) : filteredConversations.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>No conversations yet</p>
-                    <button
-                      onClick={createNewConversation}
-                      className="mt-2 text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      Start your first conversation
-                    </button>
-                  </div>
-                ) : (
-                  filteredConversations.map((conversation) => (
-                    <div
-                      key={conversation.sessionId}
-                      onClick={() => handleSelectConversation(conversation.sessionId)}
-                      className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                        selectedConversation?.sessionId === conversation.sessionId ? 'bg-blue-50 border-r-2 border-r-blue-600' : ''
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-3 flex-1 min-w-0">
-                          {isSelectionMode && (
-                            <div className="flex-shrink-0 mt-1">
-                              {selectedConversations.has(conversation.sessionId) ? (
-                                <CheckSquare className="h-4 w-4 text-blue-600" />
-                              ) : (
-                                <Square className="h-4 w-4 text-gray-400" />
-                              )}
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-medium text-gray-900 truncate">
-                              {conversation.title}
-                            </h3>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {conversation.messageCount} messages
-                              {conversation.type === 'draft' && ' • Draft'}
-                              {conversation.isCompleted && conversation.type !== 'draft' && ' • Completed'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
-                          {!isSelectionMode && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleDeleteConversation(conversation.sessionId)
-                              }}
-                              className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                              title="Delete Conversation"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
-                          <div className={`w-2 h-2 rounded-full ${
-                            conversation.type === 'draft' ? 'bg-yellow-500' :
-                            conversation.isCompleted ? 'bg-green-500' : 'bg-blue-500'
-                          }`} />
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+    <Layout title="Chat - Harmonia-AI" description="Your chat conversations">
+  <div className="h-full flex min-h-0 flex-1 flex-row bg-[#0f2b2fcc]">
+        {/* Sidebar: always visible, main area hidden on mobile */}
+        <div
+          className={
+            'w-full md:w-[380px] max-w-full md:max-w-[380px] flex flex-col min-h-0 bg-white border-r border-[#73cfd0]'
+          }
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#73cfd0] bg-white">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#73cfd0] flex items-center justify-center text-black font-bold text-lg">U</div>
+              <span className="text-black font-semibold text-lg">Chats</span>
             </div>
+            <button
+              onClick={createNewConversation}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-[#73cfd0] hover:bg-[#0f2b2fcc] transition-colors text-black"
+              title="New Chat"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          </div>
+          {/* Search */}
+          <div className="px-4 py-2 bg-[#0f2b2fcc] border-b border-[#73cfd0]">
+            <div className="relative">
+              <Search className="h-4 w-4 absolute left-3 top-3 text-[#73cfd0]" />
+              <input
+                type="text"
+                placeholder="Search or start new chat"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-lg bg-white text-black border-none focus:outline-none focus:ring-2 focus:ring-[#73cfd0] placeholder-[#73cfd0]"
+              />
+            </div>
+          </div>
+          {/* Chat List */}
+          <div className="flex-1 overflow-y-auto bg-[#0f2b2fcc]">
+            {isLoadingConversations ? (
+              <div className="flex items-center justify-center py-8">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : filteredConversations.length === 0 ? (
+              <div className="text-center py-8 text-[#667781]">
+                <MessageCircle className="h-12 w-12 mx-auto mb-4 text-[#73cfd0]" />
+                <p className="text-black">No conversations yet</p>
+                <button
+                  onClick={createNewConversation}
+                  className="mt-2 text-[#73cfd0] hover:text-[#0f2b2fcc] font-medium"
+                >
+                  Start your first conversation
+                </button>
+              </div>
+            ) : (
+              filteredConversations.map((conversation) => (
+                <div
+                  key={conversation.sessionId}
+                  onClick={() => handleSelectConversation(conversation.sessionId)}
+                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[#73cfd0] transition-colors ${
+                    selectedConversation?.sessionId === conversation.sessionId ? 'bg-[#73cfd0]' : 'hover:bg-[#0f2b2fcc]'
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#73cfd0] flex items-center justify-center text-black font-bold text-lg">
+                    {conversation.title?.charAt(0)?.toUpperCase() || 'C'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-medium text-black truncate">{conversation.title}</h3>
+                    <p className="text-xs text-[#0f2b2fcc] mt-1">
+                      {conversation.messageCount} messages
+                      {conversation.type === 'draft' && ' • Draft'}
+                      {conversation.isCompleted && conversation.type !== 'draft' && ' • Completed'}
+                    </p>
+                  </div>
+                  <div className={`w-2 h-2 rounded-full ${
+                    conversation.type === 'draft' ? 'bg-yellow-500' :
+                    conversation.isCompleted ? 'bg-green-500' : 'bg-[#73cfd0]'
+                  }`} />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+        {/* Main Area: hidden on mobile, visible on desktop */}
+  <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-[#0f2b2fcc] min-h-0">
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-32 h-32 rounded-full bg-[#73cfd0] flex items-center justify-center mb-6">
+              <MessageCircle className="h-16 w-16 text-black" />
+            </div>
+            <h1 className="text-3xl font-bold text-black mb-2">Welcome to Harmonia-AI</h1>
+            <p className="text-[#73cfd0] text-lg text-center max-w-md mb-4">Start a new conversation or select an existing chat from the sidebar. Your legal AI assistant is ready to help!</p>
           </div>
         </div>
       </div>
