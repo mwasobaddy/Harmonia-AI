@@ -3,14 +3,13 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { Header, Footer, Button, LoadingSpinner } from '../components'
+import toast from 'react-hot-toast'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -22,14 +21,14 @@ export default function Login() {
       localStorage.setItem('authToken', token)
       // Dispatch custom event to notify components of auth change
       window.dispatchEvent(new Event('authChange'))
-      setSuccess('Successfully logged in! Redirecting...')
+      toast.success('Successfully logged in! Redirecting...')
       setTimeout(() => {
         router.push('/chat') // Redirect to chat page after login
       }, 2000)
     } else if (successParam === 'true') {
-      setSuccess('Login successful!')
+      toast.success('Login successful!')
     } else if (errorParam) {
-      setError('Authentication failed. Please try again.')
+      toast.error('Authentication failed. Please try again.')
     }
   }, [router.query, router])
 
@@ -37,8 +36,8 @@ export default function Login() {
     if (isGoogleLoading) return // Prevent multiple calls
     
     setIsGoogleLoading(true)
-    setError('')
-    
+    toast.error('Redirecting to Google...')
+
     // Redirect to Google OAuth
     window.location.href = 'http://localhost:5000/api/auth/google'
   }
@@ -52,10 +51,10 @@ export default function Login() {
         <link rel="icon" href="/logo.png" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
 
-        <main className="max-w-md mx-auto py-16 px-4 sm:px-6 lg:px-8">
+        <main className="max-w-md mx-auto py-16 px-4 sm:px-6 lg:px-8 flex-1">
           <div className="bg-white py-8 px-6 shadow rounded-lg sm:px-10">
             <div className="mb-8">
               <h2 className="text-center text-3xl font-extrabold text-gray-900">
@@ -69,7 +68,7 @@ export default function Login() {
               </p>
             </div>
 
-            {error && (
+            {/* {error && (
               <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
                 <p className="text-sm text-red-600">{error}</p>
               </div>
@@ -79,7 +78,7 @@ export default function Login() {
               <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
                 <p className="text-sm text-green-600">{success}</p>
               </div>
-            )}
+            )} */}
 
             <div className="text-center">
               <p className="text-sm text-gray-600 mb-6">

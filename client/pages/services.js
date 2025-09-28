@@ -1,4 +1,4 @@
-import { Layout, ServiceCard } from '../components'
+import { Footer, Layout, ServiceCard } from '../components'
 
 export default function Services() {
   const services = [
@@ -82,6 +82,7 @@ export default function Services() {
           </div>
         </div>
       </div>
+      <Footer />
     </Layout>
   )
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import Header from '../components/Header';
+import Layout from '../components/Layout';
 import Button from '../components/Button';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -107,15 +107,12 @@ export default function Profile() {
   }
 
   return (
-    <>
-      <Head>
-        <title>Profile Settings - Harmonia-AI</title>
-        <meta name="description" content="Manage your profile settings" />
-      </Head>
+    <Layout
+        title="Profile Settings - Harmonia-AI"
+        description="Manage your profile settings"
+    >
 
       <div className="min-h-screen bg-gray-50">
-        <Header />
-
         <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-white shadow rounded-lg">
             <div className="px-6 py-4 border-b border-gray-200">
@@ -213,6 +210,6 @@ export default function Profile() {
           </div>
         </main>
       </div>
-    </>
+    </Layout>
   );
 }

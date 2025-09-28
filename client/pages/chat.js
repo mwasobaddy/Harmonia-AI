@@ -3,10 +3,10 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
 import LoadingSpinner from '../components/LoadingSpinner'
-import Header from '../components/Header'
-import BottomNav from '../components/BottomNav'
+import Layout from '../components/Layout'
 import api from '../lib/api'
-import { MessageCircle, Plus, Search, Trash2, CheckSquare, Square, Bot, User } from 'lucide-react'
+import { MessageCircle, Plus, Search, Trash2, CheckSquare, Square, Bot, User, Save, ArrowLeft, Send } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 export default function Chat() {
   const [conversations, setConversations] = useState([])
@@ -16,11 +16,14 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingConversations, setIsLoadingConversations] = useState(true)
   const [isInitialLoading, setIsInitialLoading] = useState(false)
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedConversations, setSelectedConversations] = useState(new Set())
+  const [isMobileChatView, setIsMobileChatView] = useState(false)
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const messagesEndRef = useRef(null)
   const router = useRouter()
+  const { isLoggedIn, loading } = useAuth()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -28,14 +31,15 @@ export default function Chat() {
 
   useEffect(() => {
     // Check authentication
-    const token = localStorage.getItem('authToken')
-    if (!token) {
+    if (!loading && !isLoggedIn) {
       router.push('/login')
       return
     }
 
-    loadConversations()
-  }, [router])
+    if (isLoggedIn) {
+      loadConversations()
+    }
+  }, [router, isLoggedIn, loading])
 
   useEffect(() => {
     scrollToBottom()
@@ -116,6 +120,9 @@ export default function Chat() {
     // For existing conversations, load from backend
     console.log('🔄 [DEBUG] Loading existing conversation from backend')
     loadConversationHistory(conversation)
+
+    // On mobile, switch to chat view after selecting conversation
+    setIsMobileChatView(true)
   }
 
   const createNewConversation = async () => {
@@ -233,6 +240,40 @@ export default function Chat() {
     }
   }
 
+  const saveDraft = async () => {
+    if (!selectedConversation || messages.length === 0) return
+
+    setIsSavingDraft(true)
+    try {
+      console.log('💾 [DEBUG] Saving draft:', {
+        sessionId: selectedConversation.sessionId,
+        messageCount: messages.length,
+        title: selectedConversation.title
+      })
+
+      await api.saveDraft(
+        selectedConversation.sessionId,
+        messages,
+        selectedConversation.title,
+        selectedConversation.offenseType
+      )
+
+      // Update conversation in list to mark as draft
+      setConversations(prev => prev.map(conv =>
+        conv.sessionId === selectedConversation.sessionId
+          ? { ...conv, type: 'draft', lastMessageTime: new Date().toISOString() }
+          : conv
+      ))
+
+      toast.success('Draft saved successfully!')
+    } catch (error) {
+      console.error('❌ [DEBUG] Error saving draft:', error)
+      toast.error('Failed to save draft')
+    } finally {
+      setIsSavingDraft(false)
+    }
+  }
+
   const filteredConversations = conversations.filter(conv =>
     conv.title.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -289,6 +330,8 @@ export default function Chat() {
       const conversation = conversations.find(conv => conv.sessionId === conversationId)
       if (conversation) {
         selectConversation(conversation)
+        // On mobile, switch to chat view after selecting conversation
+        setIsMobileChatView(true)
       }
     }
   }
@@ -299,20 +342,16 @@ export default function Chat() {
   }
 
   return (
-    <>
-      <Head>
-        <title>Chat - Harmonia-AI</title>
-        <meta name="description" content="Your chat conversations" />
-      </Head>
+    <Layout
+      title="Chat - Harmonia-AI"
+      description="Your chat conversations"
+    >
 
-      <div className="min-h-screen bg-gray-50 pb-16 md:pb-0 flex flex-col">
-        <Header />
-
-        <div className="w-full px-4 sm:px-6 lg:px-8 flex flex-1 justify-center">
-          <div className="flex overflow-hi
-          dden w-full h-[calc(100vh-64px)]">
+      <div className="h-full min-h-0 flex-1 flex flex-col bg-gray-50">
+        <div className="w-full md:px-6 lg:px-8 flex-1 flex justify-center min-h-0">
+          <div className={`flex overflow-hidden w-full flex-1 min-h-0`}>
             {/* Sidebar - Conversations List */}
-            <div className="w-80 border-r border-gray-200 flex flex-col">
+            <div className={`w-full md:w-80 border-r border-gray-200 flex flex-col min-h-0 ${isMobileChatView ? 'hidden' : 'flex'}`}>
               {/* Sidebar Header */}
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
@@ -415,7 +454,8 @@ export default function Chat() {
                             </h3>
                             <p className="text-xs text-gray-500 mt-1">
                               {conversation.messageCount} messages
-                              {conversation.isCompleted && ' • Completed'}
+                              {conversation.type === 'draft' && ' • Draft'}
+                              {conversation.isCompleted && conversation.type !== 'draft' && ' • Completed'}
                             </p>
                           </div>
                         </div>
@@ -433,6 +473,7 @@ export default function Chat() {
                             </button>
                           )}
                           <div className={`w-2 h-2 rounded-full ${
+                            conversation.type === 'draft' ? 'bg-yellow-500' :
                             conversation.isCompleted ? 'bg-green-500' : 'bg-blue-500'
                           }`} />
                         </div>
@@ -444,15 +485,25 @@ export default function Chat() {
             </div>
 
             {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col">
+            <div className={`flex-1 flex flex-col min-h-0 ${!isMobileChatView ? 'hidden' : 'flex'} md:flex`}>
               {selectedConversation ? (
                 <>
-                  {/* Chat Header */}
-                  <div className="bg-blue-600 text-white px-6 py-4 border-b border-blue-700">
-                    <h1 className="text-xl font-semibold">{selectedConversation.title}</h1>
-                    <p className="text-blue-100 text-sm">
-                      {selectedConversation.isCompleted ? 'Completed' : 'In Progress'}
-                    </p>
+                  <div className='bg-blue-600 border-b border-blue-700 text-white px-6 py-2 flex gap-4 items-center'>
+                    {/* Mobile Back Button */}
+                    <div className="md:hidden">
+                      <button
+                        onClick={() => setIsMobileChatView(false)}
+                        className="flex items-center gap-2 text-blue-100 hover:text-white"
+                      >
+                        <ArrowLeft size={16} />
+                      </button>
+                    </div>
+                    <div className="">
+                      <h1 className="text-xl font-semibold">{selectedConversation.title}</h1>
+                      <p className="text-blue-100 text-sm">
+                        {selectedConversation.isCompleted ? 'Completed' : 'In Progress'}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Messages */}
@@ -531,7 +582,7 @@ export default function Chat() {
 
                   {/* Input Form */}
                   <div className="border-t p-4">
-                    <form onSubmit={sendMessage} className="flex space-x-4">
+                    <form onSubmit={sendMessage} className="flex space-x-4 items-center">
                       <input
                         type="text"
                         value={inputMessage}
@@ -541,11 +592,24 @@ export default function Chat() {
                         disabled={isLoading || isInitialLoading}
                       />
                       <button
+                        type="button"
+                        onClick={saveDraft}
+                        disabled={isSavingDraft || messages.length === 0 || selectedConversation?.isCompleted}
+                        className={`p-2 h-fit rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${
+                          selectedConversation?.isCompleted 
+                            ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                            : 'bg-green-600 text-white hover:bg-green-700'
+                        }`}
+                        title={selectedConversation?.isCompleted ? "Conversation completed - no need to save draft" : "Save Draft"}
+                      >
+                        <Save className="h-4 w-4" />
+                      </button>
+                      <button
                         type="submit"
                         disabled={isLoading || isInitialLoading || !inputMessage.trim()}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2 h-fit rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center bg-blue-600 hover:bg-blue-700 text-white"
                       >
-                        Send
+                        <Send className="h-4 w-4" />
                       </button>
                     </form>
                   </div>
@@ -568,9 +632,7 @@ export default function Chat() {
             </div>
           </div>
         </div>
-
-        <BottomNav />
       </div>
-    </>
+    </Layout>
   )
 }

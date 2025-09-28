@@ -1,4 +1,4 @@
-import { Layout, Button } from '../components'
+import { Layout, Button, Footer } from '../components'
 
 export default function Contact() {
   return (
@@ -56,6 +56,7 @@ export default function Contact() {
           </div>
         </div>
       </div>
+      <Footer />
     </Layout>
   )
 }

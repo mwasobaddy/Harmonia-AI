@@ -1,4 +1,4 @@
-import { Layout, StepCard, Button } from '../components'
+import { Layout, StepCard, Button, Footer } from '../components'
 
 export default function HowItWorks() {
   const steps = [
@@ -182,6 +182,7 @@ export default function HowItWorks() {
           </div>
         </div>
       </div>
+      <Footer />
     </Layout>
   )
 }

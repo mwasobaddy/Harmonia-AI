@@ -3,27 +3,31 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 import Header from '../components/Header';
+import Layout from '../components/Layout';
 import BottomNav from '../components/BottomNav';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../lib/api';
 import { FileText, Download, Eye, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Documents() {
   const router = useRouter();
+  const { isLoggedIn, loading: authLoading } = useAuth();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDocument, setSelectedDocument] = useState(null);
 
   useEffect(() => {
     // Check authentication
-    const token = localStorage.getItem('authToken');
-    if (!token) {
+    if (!authLoading && !isLoggedIn) {
       router.push('/login');
       return;
     }
 
-    loadDocuments();
-  }, [router]);
+    if (isLoggedIn) {
+      loadDocuments();
+    }
+  }, [router, isLoggedIn, authLoading]);
 
   const loadDocuments = async () => {
     try {
@@ -98,7 +102,7 @@ export default function Documents() {
         <Head>
           <title>Documents - Harmonia-AI</title>
         </Head>
-        <div className="min-h-screen bg-gray-50 pb-16 md:pb-0 flex flex-col">
+        <div className="min-h-screen bg-gray-50 md:pb-0 flex flex-col">
           <Header />
           <div className="flex-1 flex items-center justify-center">
             <LoadingSpinner size="lg" />
@@ -110,105 +114,102 @@ export default function Documents() {
   }
 
   return (
-    <>
-      <Head>
-        <title>Documents - Harmonia-AI</title>
-        <meta name="description" content="View and manage your documents" />
-      </Head>
+      <Layout
+        title="Chat - Harmonia-AI"
+        description="Your chat conversations"
+      >
 
-      <div className="min-h-screen bg-gray-50 pb-16 md:pb-0 flex flex-col">
-        <Header />
-
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Your Documents</h1>
-            <p className="mt-2 text-gray-600">View and download your mitigation statements and documents.</p>
-          </div>
-
-          {documents.length === 0 ? (
-            <div className="bg-white shadow rounded-lg p-8 text-center">
-              <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No documents yet</h3>
-              <p className="text-gray-500 mb-4">Complete a consultation to generate your first mitigation statement.</p>
-              <button
-                onClick={() => router.push('/chat')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Start a Consultation
-              </button>
+      <div className="max-w-7xl h-full min-h-0 flex-1 flex flex-col bg-gray-50 items-center">
+        <div className="md:px-6 lg:px-8 flex-1 flex justify-center min-h-0">
+          <div className={`flex overflow-hidden w-full flex-1 min-h-0 flex-col`}>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900">Your Documents</h1>
+              <p className="mt-2 text-gray-600">View and download your mitigation statements and documents.</p>
             </div>
-          ) : (
-            <div className="space-y-6">
-              {documents.map((document) => (
-                <div key={document.id} className="bg-white shadow rounded-lg p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4">
-                      {getStatusIcon(document.status)}
-                      <div className="flex-1">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          Mitigation Statement
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Created on {new Date(document.createdAt).toLocaleDateString()}
-                        </p>
-                        <div className="flex items-center mt-2">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            document.status === 'PENDING_REVIEW' ? 'bg-yellow-100 text-yellow-800' :
-                            document.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
-                            document.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {getStatusText(document.status)}
-                          </span>
+
+            {documents.length === 0 ? (
+              <div className="bg-white shadow rounded-lg p-8 text-center">
+                <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No documents yet</h3>
+                <p className="text-gray-500 mb-4">Complete a consultation to generate your first mitigation statement.</p>
+                <button
+                  onClick={() => router.push('/chat')}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Start a Consultation
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {documents.map((document) => (
+                  <div key={document.id} className="bg-white shadow rounded-lg p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-4">
+                        {getStatusIcon(document.status)}
+                        <div className="flex-1">
+                          <h3 className="text-lg font-medium text-gray-900">
+                            Mitigation Statement
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Created on {new Date(document.createdAt).toLocaleDateString()}
+                          </p>
+                          <div className="flex items-center mt-2">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              document.status === 'PENDING_REVIEW' ? 'bg-yellow-100 text-yellow-800' :
+                              document.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                              document.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {getStatusText(document.status)}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setSelectedDocument(selectedDocument?.id === document.id ? null : document)}
-                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                        title="View Details"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </button>
-                      {document.status === 'APPROVED' && (
+                      <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => downloadDocument(document.id, `mitigation-statement-${document.id}.txt`)}
-                          className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                          title="Download"
+                          onClick={() => setSelectedDocument(selectedDocument?.id === document.id ? null : document)}
+                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="View Details"
                         >
-                          <Download className="h-5 w-5" />
+                          <Eye className="h-5 w-5" />
                         </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {selectedDocument?.id === document.id && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <h4 className="text-sm font-medium text-gray-900 mb-2">Document Preview</h4>
-                      <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
-                        <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
-                          {document.content.length > 1000
-                            ? document.content.substring(0, 1000) + '...'
-                            : document.content
-                          }
-                        </pre>
+                        {document.status === 'APPROVED' && (
+                          <button
+                            onClick={() => downloadDocument(document.id, `mitigation-statement-${document.id}.txt`)}
+                            className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                            title="Download"
+                          >
+                            <Download className="h-5 w-5" />
+                          </button>
+                        )}
                       </div>
-                      {document.status === 'PENDING_REVIEW' && (
-                        <p className="text-sm text-yellow-600 mt-2">
-                          This document is currently under review by our legal team. You'll be notified once it's approved.
-                        </p>
-                      )}
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </main>
 
-        <BottomNav />
+                    {selectedDocument?.id === document.id && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <h4 className="text-sm font-medium text-gray-900 mb-2">Document Preview</h4>
+                        <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
+                          <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
+                            {document.content.length > 1000
+                              ? document.content.substring(0, 1000) + '...'
+                              : document.content
+                            }
+                          </pre>
+                        </div>
+                        {document.status === 'PENDING_REVIEW' && (
+                          <p className="text-sm text-yellow-600 mt-2">
+                            This document is currently under review by our legal team. You'll be notified once it's approved.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </>
+    </Layout>
   );
 }
