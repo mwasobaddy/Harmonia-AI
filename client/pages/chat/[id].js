@@ -216,9 +216,14 @@ export default function Chat() {
 
             // Set conversation details
             const userMessages = data.messages ? data.messages.filter(msg => msg.role === 'user') : []
-            const finalTitle = data.title && data.title !== 'New Conversation' && data.title !== 'Conversation'
-                ? data.title
-                : (userMessages.length >= 2 ? generateTitleFromMessage(userMessages[1].content) : 'Starting consultation...')
+            
+            // Check for persisted title first
+            const persistedTitle = localStorage.getItem(`conversation_title_${id}`)
+            const finalTitle = persistedTitle || 
+                (data.title && data.title !== 'New Conversation' && data.title !== 'Conversation'
+                    ? data.title
+                    : (userMessages.length >= 2 ? generateTitleFromMessage(userMessages[1].content) : 'Starting consultation...'))
+            
             setConversation({ sessionId: id, title: finalTitle, isCompleted: data.isCompleted || false })
         } catch (error) {
             console.error('❌ [DEBUG] Error loading conversation:', error)
@@ -255,6 +260,9 @@ export default function Chat() {
             ))
             // Update local conversation state
             setConversation(prev => ({ ...prev, title: newTitle }))
+            
+            // Persist the generated title in localStorage for consistency across page navigations
+            localStorage.setItem(`conversation_title_${conversation.sessionId}`, newTitle)
         }
 
         console.log('📤 [DEBUG] Frontend sending message:', {

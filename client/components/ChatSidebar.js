@@ -63,14 +63,18 @@ export default function ChatSidebar({
   }
 
   const getDisplayTitle = (conversation) => {
+    // First check if we have a persisted title in localStorage
+    const persistedTitle = localStorage.getItem(`conversation_title_${conversation.sessionId}`)
+    if (persistedTitle) {
+      return persistedTitle
+    }
+    
     // If conversation has a proper title (not default), use it
     if (conversation.title && conversation.title !== 'New Conversation' && conversation.title !== 'Conversation') {
       return conversation.title
     }
     
-    // Otherwise, try to generate from the last user message if available
-    // For now, we'll use the conversation title as-is since we don't have message content here
-    // This could be enhanced later by fetching message preview from API
+    // Otherwise, return the default title
     return conversation.title || 'New Conversation'
   }
 
@@ -211,7 +215,7 @@ export default function ChatSidebar({
             <div
               key={conversation.sessionId}
               className={`group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[#222d34] transition-colors ${
-                selectedId === conversation.sessionId ? 'bg-[#202c33]' : 'hover:bg-[#222d34]'
+                selectedId === conversation.sessionId ? 'bg-[#2a4a5a]' : 'hover:bg-[#222d34]'
               }`}
             >
               {isSelectionMode && (
