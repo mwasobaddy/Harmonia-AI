@@ -2,11 +2,16 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { ChevronDown, User, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-const ProfileDropdown = ({ user, onLogout }) => {
+const ProfileDropdown = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const router = useRouter();
+  const { logout, user: contextUser } = useAuth();
+
+  // If `user` prop is not provided, fall back to context user
+  const displayUser = user || contextUser || null
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -20,8 +25,9 @@ const ProfileDropdown = ({ user, onLogout }) => {
   }, []);
 
   const handleLogout = () => {
-    onLogout();
+    logout();
     setIsOpen(false);
+    router.push('/login');
   };
 
   return (
@@ -31,19 +37,25 @@ const ProfileDropdown = ({ user, onLogout }) => {
         className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md p-1"
       >
         <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-          {user?.name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+          {displayUser?.name?.charAt(0)?.toUpperCase()
+            || displayUser?.email?.charAt(0)?.toUpperCase()
+            || 'U'}
         </div>
         <span className="text-sm font-medium hidden sm:block">
-          {user?.name?.split(' ')[0] || 'User'}
+          {displayUser?.name
+            ? displayUser.name.split(' ')[0]
+            : displayUser?.email
+              ? displayUser.email.split('@')[0]
+              : 'User'}
         </span>
         <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-fit bg-white rounded-md shadow-lg pt-1 z-50 border border-gray-200">
+        <div className="absolute right-0 mt-2 min-w-[170px] w-fit bg-white rounded-md shadow-lg pt-1 z-50 border border-gray-200">
           <div className="px-4 py-2 border-b border-gray-200">
-            <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
-            <p className="text-sm text-gray-500">{user?.email}</p>
+            <p className="text-sm font-medium text-gray-900">{displayUser?.name || displayUser?.email || 'User'}</p>
+            <p className="text-sm text-gray-500">{displayUser?.email}</p>
           </div>
 
           <Link
