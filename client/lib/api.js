@@ -78,6 +78,13 @@ class ApiClient {
     return this.request(`/chat/orders/${orderId}`, { method: 'DELETE' })
   }
 
+  async saveDraft(sessionId, messages, title, offenseType) {
+    return this.request('/chat/drafts', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId, messages, title, offenseType })
+    })
+  }
+
   // Order methods
   async getDocument(documentId) {
     return this.request(`/documents/${documentId}`)
