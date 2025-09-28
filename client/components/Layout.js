@@ -1,11 +1,14 @@
 import Head from 'next/head'
 import { Header, Footer, BottomNav } from './index'
+import { useAuth } from '../context/AuthContext'
 
 export default function Layout({
   children,
   title = 'Harmonia-AI - Professional Legal Mitigation Services',
   description = 'AI-powered legal mitigation document preparation for minor criminal offences'
 }) {
+  const { isLoggedIn } = useAuth()
+
   return (
     <>
       <Head>
@@ -15,13 +18,12 @@ export default function Layout({
         <link rel="icon" href="/logo.png" />
       </Head>
 
-      <div className="min-h-screen flex flex-col pb-16 md:pb-0">
+      <div className="min-h-screen flex flex-col h-screen">
         <Header />
-        <main className="flex-1">
+        <main className="flex-1 min-h-0 h-full flex flex-col overflow-y-auto">
           {children}
+          <BottomNav />
         </main>
-        <Footer />
-        <BottomNav />
       </div>
     </>
   )
