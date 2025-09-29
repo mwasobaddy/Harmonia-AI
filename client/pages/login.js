@@ -10,7 +10,12 @@ import gsap from 'gsap';
 
 export default function Login() {
   // --- State ---
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLogin, setIsLogin] = useState(true); // true for login, false for register
   const router = useRouter();
 
   // --- Animation Refs ---
@@ -54,10 +59,94 @@ export default function Login() {
 
   // --- Google login handler ---
   const handleGoogleLogin = () => {
-    if (isGoogleLoading) return;
-    setIsGoogleLoading(true);
+    if (isLoading) return;
+    setIsLoading(true);
+    setLoadingText('Redirecting to Google...');
     toast('Redirecting to Google...');
     window.location.href = 'http://localhost:5000/api/auth/google';
+  };
+
+  // --- Email/Password login handler ---
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    if (isLoading) return;
+
+    if (!email || !password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingText('Signing in...');
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('authToken', data.token);
+        window.dispatchEvent(new Event('authChange'));
+        toast.success('Successfully logged in! Redirecting...');
+        setTimeout(() => {
+          router.push('/chat');
+        }, 2000);
+      } else {
+        toast.error(data.error || 'Login failed');
+      }
+    } catch (error) {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setLoadingText('');
+    }
+  };
+
+  // --- Email/Password register handler ---
+  const handleEmailRegister = async (e) => {
+    e.preventDefault();
+    if (isLoading) return;
+
+    if (!email || !password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingText('Creating account...');
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success('Account created successfully! Please log in.');
+        setIsLogin(true);
+      } else {
+        toast.error(data.error || 'Registration failed');
+      }
+    } catch (error) {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setLoadingText('');
+    }
   };
 
   return (
@@ -86,11 +175,94 @@ export default function Login() {
             </div>
 
             <h2 className="text-center text-3xl font-extrabold text-white mb-2 tracking-tight">
-              Sign in to your account
+              {isLogin ? 'Sign in to your account' : 'Create your account'}
             </h2>
             <p className="text-center text-base text-[#73cfd0]/80 mb-6">
-              Secure access to your legal mitigation dashboard
+              {isLogin ? 'Secure access to your legal mitigation dashboard' : 'Join Harmonia-AI for professional legal assistance'}
             </p>
+
+            {/* Email/Password Form */}
+            <form onSubmit={isLogin ? handleEmailLogin : handleEmailRegister} className="w-full mb-6">
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-[#73cfd0] mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-[#1a3a4a] text-white border-2 border-[#73cfd0]/30 focus:outline-none focus:border-[#73cfd0] focus:ring-2 focus:ring-[#73cfd0]/20 placeholder-[#73cfd0]/70 transition-all duration-200"
+                    placeholder="Enter your email"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-[#73cfd0] mb-1">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete={isLogin ? "current-password" : "new-password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-3 pr-12 rounded-xl bg-[#1a3a4a] text-white border-2 border-[#73cfd0]/30 focus:outline-none focus:border-[#73cfd0] focus:ring-2 focus:ring-[#73cfd0]/20 placeholder-[#73cfd0]/70 transition-all duration-200"
+                      placeholder={isLogin ? "Enter your password" : "Create a password"}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#73cfd0]/70 hover:text-[#73cfd0] transition-colors duration-200 focus:outline-none"
+                      disabled={isLoading}
+                    >
+                      {showPassword ? (
+                        // Eye off icon (password hidden)
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                        </svg>
+                      ) : (
+                        // Eye icon (password visible)
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="w-full mt-6 bg-[#73cfd0] text-black hover:bg-white hover:text-[#0f2b2f] border-2 border-[#73cfd0] transition-all duration-300 shadow-lg hover:shadow-2xl"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    {loadingText}
+                  </>
+                ) : (
+                  isLogin ? 'Sign In' : 'Create Account'
+                )}
+              </Button>
+            </form>
+
+            {/* Divider */}
+            <div className="w-full flex items-center mb-6">
+              <div className="flex-1 h-px bg-[#73cfd0]/30"></div>
+              <span className="px-3 text-sm text-[#73cfd0]/80">or</span>
+              <div className="flex-1 h-px bg-[#73cfd0]/30"></div>
+            </div>
 
             {/* Google Login Button */}
             <Button
@@ -98,12 +270,12 @@ export default function Login() {
               variant="primary"
               size="lg"
               className="w-full mb-4 flex items-center justify-center gap-2 bg-[#73cfd0] text-black hover:bg-white hover:text-[#0f2b2f] border-2 border-[#73cfd0] transition-all duration-300 shadow-lg hover:shadow-2xl"
-              disabled={isGoogleLoading}
+              disabled={isLoading}
             >
-              {isGoogleLoading ? (
+              {isLoading ? (
                 <>
                   <LoadingSpinner size="sm" className="mr-2" />
-                  Redirecting to Google...
+                  {loadingText}
                 </>
               ) : (
                 <>
@@ -118,6 +290,17 @@ export default function Login() {
                 </>
               )}
             </Button>
+
+            {/* Toggle between Login/Register */}
+            <div className="text-center mb-4">
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-sm text-[#73cfd0] hover:text-white underline transition-colors"
+              >
+                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+              </button>
+            </div>
 
             <p className="text-xs text-[#73cfd0]/80 text-center mb-2">
               By signing in, you agree to our{' '}
