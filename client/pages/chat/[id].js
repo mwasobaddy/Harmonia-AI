@@ -295,6 +295,9 @@ export default function Chat() {
                     console.log('Questionnaire completed')
                 }
 
+                // Refresh conversations list to update sidebar with new message count and status
+                loadConversations()
+
                 setIsLoading(false)
             }, remainingTime)
         } catch (error) {
