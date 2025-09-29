@@ -118,6 +118,7 @@ export default function ChatSidebar({
   }
 
   const handleDeleteConversation = async (conversation) => {
+    const isSessionChat = conversation.type === 'session';
     const confirmAction = async () => {
       await onDeleteConversation(conversation.sessionId)
     }
