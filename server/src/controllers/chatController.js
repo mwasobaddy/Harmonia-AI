@@ -114,6 +114,15 @@ async function autoSaveConversation(userId, sessionId, messages, force = false) 
       else if (secondMessage.includes('minor') || secondMessage.includes('criminal')) offenseType = 'Minor criminal offences';
     }
 
+    // Check if draft already exists for this conversation
+    const existingDraft = await prisma.draftConversation.findUnique({
+      where: {
+        userId_sessionId: { userId, sessionId }
+      }
+    });
+
+    const isUpdate = !!existingDraft;
+
     // Save to database
     await prisma.draftConversation.upsert({
       where: {
@@ -134,7 +143,7 @@ async function autoSaveConversation(userId, sessionId, messages, force = false) 
       }
     });
 
-    console.log('💾 [AUTO-SAVE] Saved conversation:', { userId, sessionId, messageCount, title });
+    console.log(`💾 [AUTO-SAVE] ${isUpdate ? 'Updated' : 'Created'} draft conversation:`, { userId, sessionId, messageCount, title });
 
   } catch (error) {
     console.error('❌ Auto-save error:', error);
@@ -916,6 +925,18 @@ const chatController = {
         }
       }
 
+      // Check if draft already exists for this conversation
+      const existingDraft = await prisma.draftConversation.findUnique({
+        where: {
+          userId_sessionId: {
+            userId,
+            sessionId
+          }
+        }
+      });
+
+      const isUpdate = !!existingDraft;
+
       // Save or update the draft conversation
       const draft = await prisma.draftConversation.upsert({
         where: {
@@ -939,7 +960,7 @@ const chatController = {
         }
       });
 
-      console.log('💾 [DEBUG] Successfully saved draft:', { draftId: draft.id, sessionId });
+      console.log(`💾 [MANUAL-SAVE] ${isUpdate ? 'Updated' : 'Created'} draft:`, { draftId: draft.id, sessionId });
       res.json({ success: true, draftId: draft.id });
 
     } catch (error) {
