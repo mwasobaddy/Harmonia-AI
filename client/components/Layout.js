@@ -7,7 +7,10 @@ export default function Layout({
   title = 'Harmonia-AI - Professional Legal Mitigation Services',
   description = 'AI-powered legal mitigation document preparation for minor criminal offences'
 }) {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, user } = useAuth()
+
+  // Don't show bottom nav for admin users
+  const showBottomNav = isLoggedIn && user?.role !== 'admin'
 
   return (
     <>
@@ -22,7 +25,7 @@ export default function Layout({
         <Header />
         <main className="flex-1 min-h-0 h-full flex flex-col overflow-y-auto">
           {children}
-          <BottomNav />
+          {showBottomNav && <BottomNav />}
         </main>
       </div>
     </>
