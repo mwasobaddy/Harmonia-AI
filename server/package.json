@@ -25,11 +25,12 @@
     "express-session": "^1.18.2",
     "google-auth-library": "^10.3.0",
     "helmet": "^7.0.0",
-    "jsonwebtoken": "^9.0.0",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "prisma": "^5.0.0",
+    "redis": "^5.8.2",
     "stripe": "^14.0.0",
     "uuid": "^9.0.0"
   },

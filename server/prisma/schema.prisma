@@ -12,6 +12,7 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
+  password  String?  // For email/password authentication
   googleId  String?  @unique
   avatar    String?
   isVerified Boolean @default(false)
@@ -21,6 +22,7 @@ model User {
   orders    Order[]
   documents Document[]
   draftConversations DraftConversation[]
+  questionnaireResponses QuestionnaireResponse[]
 
   @@map("users")
 }
@@ -46,13 +48,20 @@ model Order {
 
 model QuestionnaireResponse {
   id         String   @id @default(cuid())
+  userId     String
+  sessionId  String   // Reference to the in-memory session
   orderId    String
-  question   String
-  answer     String
+  title      String
+  messages   String   // JSON string of messages array
+  offenseType String?  // Optional offense type if specified
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime? // Soft delete field
 
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, sessionId])
   @@map("questionnaire_responses")
 }
 

@@ -1,6 +1,7 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
@@ -197,6 +198,104 @@ const authController = {
       } else {
         res.status(500).json({ error: 'Failed to update profile' });
       }
+    }
+  },
+
+  // Email/Password Registration
+  register: async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+      }
+
+      // Check if user already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { email }
+      });
+
+      if (existingUser) {
+        return res.status(400).json({ error: 'User with this email already exists' });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      // Create user
+      const user = await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          isVerified: false // Email verification could be added later
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          avatar: true,
+          isVerified: true,
+          createdAt: true
+        }
+      });
+
+      res.status(201).json({ message: 'User created successfully', user });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ error: 'Failed to create user' });
+    }
+  },
+
+  // Email/Password Login
+  login: async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+
+      // Find user
+      const user = await prisma.user.findUnique({
+        where: { email }
+      });
+
+      if (!user || !user.password) {
+        return res.status(401).json({ error: 'Invalid email or password' });
+      }
+
+      // Check password
+      const isValidPassword = await bcrypt.compare(password, user.password);
+
+      if (!isValidPassword) {
+        return res.status(401).json({ error: 'Invalid email or password' });
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      // Return user data and token
+      const userData = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt
+      };
+
+      res.json({ token, user: userData });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ error: 'Failed to login' });
     }
   }
 };

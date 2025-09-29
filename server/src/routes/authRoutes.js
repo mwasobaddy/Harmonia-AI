@@ -17,8 +17,12 @@ router.put('/profile', authController.updateProfile);
 // Logout
 router.post('/logout', authController.logout);
 
-// Legacy login route (for backward compatibility)
-router.post('/login', (req, res) => {
+// Email/Password Authentication
+router.post('/register', authController.register);
+router.post('/login', authController.login);
+
+// Legacy login route (for backward compatibility) - now points to email/password login
+router.post('/login-legacy', (req, res) => {
   res.json({
     message: 'Please use Google OAuth for authentication',
     googleAuthUrl: `${process.env.BACKEND_URL}/api/auth/google`
