@@ -24,4 +24,7 @@ router.delete('/orders/:orderId', authenticateToken, chatController.deleteOrder)
 // Save a draft conversation
 router.post('/drafts', authenticateToken, chatController.saveDraft);
 
+// Admin: Get platform statistics
+router.get('/admin/stats', authenticateToken, chatController.getAdminStats);
+
 module.exports = router;
