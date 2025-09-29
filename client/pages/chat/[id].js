@@ -16,6 +16,7 @@ export default function Chat() {
     const [isLoading, setIsLoading] = useState(false)
     const [isInitialLoading, setIsInitialLoading] = useState(false)
     const [isSavingDraft, setIsSavingDraft] = useState(false)
+    const [autoSaveStatus, setAutoSaveStatus] = useState('') // New state for auto-save feedback
     const [conversations, setConversations] = useState([])
     const [searchTerm, setSearchTerm] = useState('')
     const [isLoadingConversations, setIsLoadingConversations] = useState(true)
@@ -249,6 +250,16 @@ export default function Chat() {
             ))
             // Update local conversation state
             setConversation(prev => ({ ...prev, title: newTitle }))
+
+            // Auto-save when title is generated (second message)
+            setAutoSaveStatus('Auto-saving conversation...')
+            saveDraft().then(() => {
+                setAutoSaveStatus('Conversation saved automatically')
+                setTimeout(() => setAutoSaveStatus(''), 3000)
+            }).catch(() => {
+                setAutoSaveStatus('Auto-save failed')
+                setTimeout(() => setAutoSaveStatus(''), 3000)
+            })
         }
 
         console.log('📤 [DEBUG] Frontend sending message:', {
@@ -412,6 +423,11 @@ export default function Chat() {
                         <div className="flex flex-col">
                             <span className="text-white font-semibold text-lg">{conversation?.title || 'Conversation'}</span>
                             <span className="text-[#73cfd0] text-xs">{conversation?.isCompleted ? 'Completed' : 'In Progress'}</span>
+                            {autoSaveStatus && (
+                                <span className={`text-xs mt-1 ${autoSaveStatus.includes('failed') ? 'text-red-400' : 'text-green-400'}`}>
+                                    {autoSaveStatus}
+                                </span>
+                            )}
                         </div>
                     </div>
                     {/* Messages */}

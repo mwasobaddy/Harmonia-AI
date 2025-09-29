@@ -89,7 +89,19 @@ export default function ChatSidebar({
 
   // Get the display title for a conversation, using the second user message if needed
   const getDisplayTitle = (conversation) => {
-    // If the title is missing or generic, try to generate from the second user message
+    // For session-based chats (not drafts), always use the second user message
+    if (conversation.type !== 'draft') {
+      // If conversation.messages exists and has at least 2 user messages, use the second one
+      if (Array.isArray(conversation.messages)) {
+        const userMessages = conversation.messages.filter(msg => msg.role === 'user');
+        if (userMessages.length >= 2) {
+          return generateTitleFromMessage(userMessages[1].content);
+        }
+      }
+      // fallback
+      return 'New Conversation';
+    }
+    // For drafts, use the existing title logic
     const genericTitles = ['New Conversation', 'Conversation', '', null, undefined];
     if (genericTitles.includes(conversation.title)) {
       // If conversation.messages exists and has at least 2 user messages, use the second one

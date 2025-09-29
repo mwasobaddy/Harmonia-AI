@@ -1,14 +1,174 @@
 const { v4: uuidv4 } = require('uuid');
 const claudeService = require('../services/claudeService');
 const prisma = require('../prismaClient');
+const redis = require('redis');
 
-// In-memory conversation storage (replace with Redis/database in production)
-// Now organized by userId: { userId: { sessionId: conversation } }
-const userConversations = {};
+// Redis client for session caching (survives restarts with persistence)
+const redisClient = redis.createClient({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: process.env.REDIS_PORT || 6379,
+  // Enable persistence by configuring Redis server with AOF or RDB
+});
+
+// Redis connection handling
+redisClient.on('error', (err) => {
+  console.error('❌ Redis connection error:', err);
+});
+
+redisClient.on('connect', () => {
+  console.log('✅ Connected to Redis');
+});
+
+// Connect to Redis
+redisClient.connect().catch(console.error);
+
+// Auto-save configuration
+const AUTO_SAVE_MESSAGE_THRESHOLD = 5; // Save every 5 messages
+const AUTO_SAVE_TIME_INTERVAL = 5 * 60 * 1000; // Save every 5 minutes
+const CONVERSATION_TTL = 24 * 60 * 60; // 24 hours TTL for Redis
+
+// Redis helper functions
+const redisHelpers = {
+  async getConversation(userId, sessionId) {
+    try {
+      const key = `chat:${userId}:${sessionId}`;
+      const data = await redisClient.get(key);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error('❌ Redis get error:', error);
+      return null;
+    }
+  },
+
+  async setConversation(userId, sessionId, messages) {
+    try {
+      const key = `chat:${userId}:${sessionId}`;
+      await redisClient.setEx(key, CONVERSATION_TTL, JSON.stringify(messages));
+      return true;
+    } catch (error) {
+      console.error('❌ Redis set error:', error);
+      return false;
+    }
+  },
+
+  async deleteConversation(userId, sessionId) {
+    try {
+      const key = `chat:${userId}:${sessionId}`;
+      await redisClient.del(key);
+      return true;
+    } catch (error) {
+      console.error('❌ Redis delete error:', error);
+      return false;
+    }
+  },
+
+  async getAllUserConversations(userId) {
+    try {
+      const pattern = `chat:${userId}:*`;
+      const keys = await redisClient.keys(pattern);
+      const conversations = {};
+
+      for (const key of keys) {
+        const sessionId = key.split(':')[2];
+        const messages = await this.getConversation(userId, sessionId);
+        if (messages) {
+          conversations[sessionId] = messages;
+        }
+      }
+
+      return conversations;
+    } catch (error) {
+      console.error('❌ Redis get all conversations error:', error);
+      return {};
+    }
+  }
+};
+
+// Auto-save function
+async function autoSaveConversation(userId, sessionId, messages, force = false) {
+  try {
+    const messageCount = messages.filter(msg => msg.role === 'user').length;
+
+    // Auto-save conditions
+    const shouldSave = force ||
+                      messageCount >= AUTO_SAVE_MESSAGE_THRESHOLD ||
+                      messageCount > 0; // Save any conversation with messages
+
+    if (!shouldSave) return;
+
+    // Generate title from second user message
+    const userMessages = messages.filter(msg => msg.role === 'user');
+    let title = 'Draft Conversation';
+    if (userMessages.length >= 2) {
+      const secondMessage = userMessages[1].content;
+      title = generateTitleFromMessage(secondMessage);
+    }
+
+    // Extract offense type if available (from second message if it's the offense type question)
+    let offenseType = null;
+    if (userMessages.length >= 2) {
+      const secondMessage = userMessages[1].content.toLowerCase();
+      if (secondMessage.includes('driving')) offenseType = 'Driving offences';
+      else if (secondMessage.includes('tv') || secondMessage.includes('licensing')) offenseType = 'TV licensing';
+      else if (secondMessage.includes('professional') || secondMessage.includes('regulation')) offenseType = 'Professional regulation';
+      else if (secondMessage.includes('minor') || secondMessage.includes('criminal')) offenseType = 'Minor criminal offences';
+    }
+
+    // Save to database
+    await prisma.draftConversation.upsert({
+      where: {
+        userId_sessionId: { userId, sessionId }
+      },
+      update: {
+        title,
+        messages: JSON.stringify(messages),
+        offenseType,
+        updatedAt: new Date()
+      },
+      create: {
+        userId,
+        sessionId,
+        title,
+        messages: JSON.stringify(messages),
+        offenseType
+      }
+    });
+
+    console.log('💾 [AUTO-SAVE] Saved conversation:', { userId, sessionId, messageCount, title });
+
+  } catch (error) {
+    console.error('❌ Auto-save error:', error);
+  }
+}
+
+// Helper function for title generation (extracted for reuse)
+function generateTitleFromMessage(message) {
+  if (!message || message.length === 0) return 'New Conversation';
+
+  let cleanMessage = message.trim();
+  cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '');
+
+  if (cleanMessage.length <= 3) return cleanMessage || 'New Conversation';
+
+  let title = cleanMessage.substring(0, 25);
+  const lastSpace = title.lastIndexOf(' ');
+  if (lastSpace > 10) {
+    title = title.substring(0, lastSpace);
+  }
+
+  title = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase();
+
+  if (title.length < cleanMessage.length) {
+    title += '...';
+  }
+
+  return title || 'New Conversation';
+}
 
 // Structured questions from main.py
 const structuredQuestions = [
   "I'd like to start by getting to know you a bit better. Could you tell me about your work? I'm interested in your profession, how long you've been qualified, your typical working hours, and what your working pattern is like.",
+  "What type of offence are you facing? Please choose from: Driving offences, TV licensing, Professional regulation, Minor criminal offences",
   "I need to understand who will be receiving this mitigation statement. Could you let me know who you intend to present this to?",
   "If you're unable to attend the hearing in person, would you mind sharing the reasons why? This can be important context for the panel or court.",
   "Now, let's talk about the situation you're facing. What specific charges or allegations are you dealing with, and who has brought them forward - is it your employer, a regulatory tribunal, or a court?",
@@ -159,13 +319,9 @@ const chatController = {
         withCurrentMessage: conversationWithCurrentMessage.length
       })
 
-      // Initialize user conversations if not exists
-      if (!userConversations[userId]) {
-        userConversations[userId] = {};
-      }
-
-      // Store conversation session
-      userConversations[userId][currentSessionId] = cleanedConversation;
+      // Initialize user conversations if not exists (Redis handles this automatically)
+      // Store conversation session in Redis
+      await redisHelpers.setConversation(userId, currentSessionId, cleanedConversation);
 
       // Simple logic flow - check completion using conversation with current message
       const state = getConversationState(conversationWithCurrentMessage);
@@ -197,26 +353,55 @@ const chatController = {
             answer: answer
           }));
 
+          // Extract offense type from the second response (index 1)
+          const offenseType = actualResponses[1] || 'general';
+
+          // Generate title from the second user message
+          let title = 'Completed Questionnaire';
+          if (actualResponses.length >= 2) {
+            const secondUserMessage = actualResponses[1];
+            let cleanMessage = secondUserMessage.trim();
+            cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '');
+            
+            if (cleanMessage.length <= 3) {
+              title = cleanMessage || 'Completed Questionnaire';
+            } else {
+              let t = cleanMessage.substring(0, 25);
+              const lastSpace = t.lastIndexOf(' ');
+              if (lastSpace > 10) {
+                t = t.substring(0, lastSpace);
+              }
+              t = t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+              if (t.length < cleanMessage.length) {
+                t += '...';
+              }
+              title = t || 'Completed Questionnaire';
+            }
+          }
+
           // Generate mitigation statement using Claude with RAG
-          const mitigationStatement = await claudeService.generateMitigationStatement(formattedResponses, 'general');
+          const mitigationStatement = await claudeService.generateMitigationStatement(formattedResponses, offenseType);
 
           console.log('💾 [DEBUG] Storing completed questionnaire in database');
 
           // Store the completed questionnaire in the database
           try {
-            // Create order with questionnaire responses
+            // Create order with questionnaire response
             const order = await prisma.order.create({
               data: {
                 userId: userId,
-                offenseType: 'general', // TODO: Get this from conversation or user input
+                offenseType: offenseType,
                 status: 'COMPLETED',
                 amount: 49.99, // TODO: Get actual pricing
                 completionMessage: responseText, // Store the actual completion message
                 responses: {
-                  create: formattedResponses.map(response => ({
-                    question: response.question,
-                    answer: response.answer
-                  }))
+                  create: {
+                    userId: userId,
+                    sessionId: currentSessionId,
+                    title: title,
+                    messages: JSON.stringify(conversationWithCurrentMessage),
+                    offenseType: offenseType
+                  }
                 }
               }
             });
@@ -250,18 +435,47 @@ const chatController = {
           try {
             console.log('💾 [DEBUG] Storing questionnaire responses despite Claude error');
 
+            // Extract offense type from the second response (index 1)
+            const offenseType = actualResponses[1] || 'general';
+
+            // Generate title from the second user message
+            let title = 'Completed Questionnaire';
+            if (actualResponses.length >= 2) {
+              const secondUserMessage = actualResponses[1];
+              let cleanMessage = secondUserMessage.trim();
+              cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '');
+              
+              if (cleanMessage.length <= 3) {
+                title = cleanMessage || 'Completed Questionnaire';
+              } else {
+                let t = cleanMessage.substring(0, 25);
+                const lastSpace = t.lastIndexOf(' ');
+                if (lastSpace > 10) {
+                  t = t.substring(0, lastSpace);
+                }
+                t = t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+                if (t.length < cleanMessage.length) {
+                  t += '...';
+                }
+                title = t || 'Completed Questionnaire';
+              }
+            }
+
             const order = await prisma.order.create({
               data: {
                 userId: userId,
-                offenseType: 'general',
+                offenseType: offenseType,
                 status: 'PENDING', // Mark as pending since statement generation failed
                 amount: 49.99,
                 completionMessage: responseText, // Store the actual completion message
                 responses: {
-                  create: formattedResponses.map(response => ({
-                    question: response.question,
-                    answer: response.answer
-                  }))
+                  create: {
+                    userId: userId,
+                    sessionId: currentSessionId,
+                    title: title,
+                    messages: JSON.stringify(conversationWithCurrentMessage),
+                    offenseType: offenseType
+                  }
                 }
               }
             });
@@ -293,10 +507,13 @@ const chatController = {
         }
       }
 
-      // Add assistant response to conversation and store it
+      // Add assistant response to conversation and store it in Redis
       const assistantMessage = { role: 'assistant', content: responseText };
       const updatedConversation = [...cleanedConversation, assistantMessage];
-      userConversations[userId][currentSessionId] = updatedConversation;
+      await redisHelpers.setConversation(userId, currentSessionId, updatedConversation);
+
+      // Auto-save to database if conditions met
+      await autoSaveConversation(userId, currentSessionId, updatedConversation);
 
       console.log('💬 [DEBUG] Sending response:', {
         responseText: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''),
@@ -323,12 +540,8 @@ const chatController = {
       const userId = req.user.userId;
       const sessionId = uuidv4();
 
-      // Initialize user conversations if not exists
-      if (!userConversations[userId]) {
-        userConversations[userId] = {};
-      }
-
-      userConversations[userId][sessionId] = [];
+      // Initialize empty conversation in Redis
+      await redisHelpers.setConversation(userId, sessionId, []);
       res.status(200).json({ sessionId });
     } catch (error) {
       console.error('Error initializing chat session:', error);
@@ -341,13 +554,9 @@ const chatController = {
     try {
       const userId = req.user.userId;
 
-      // Initialize user conversations if not exists
-      if (!userConversations[userId]) {
-        userConversations[userId] = {};
-      }
-
-      // Get in-memory conversations
-      const inMemoryConversations = Object.entries(userConversations[userId]).map(([sessionId, messages]) => {
+      // Get Redis conversations
+      const redisConversations = await redisHelpers.getAllUserConversations(userId);
+      const inMemoryConversations = Object.entries(redisConversations).map(([sessionId, messages]) => {
         // Get the first user message as title, or use a default
         const firstUserMessage = messages.find(msg => msg.role === 'user');
         const title = firstUserMessage
@@ -359,13 +568,13 @@ const chatController = {
         const lastMessageTime = lastMessage ? new Date().toISOString() : new Date().toISOString();
 
         return {
-          id: sessionId, // Use sessionId as id for frontend compatibility
+          id: sessionId,
           sessionId,
           title,
           messageCount: messages.length,
           lastMessageTime,
           isCompleted: messages.some(msg => msg.role === 'assistant' && msg.content.includes('Thank you for providing all that information')),
-          type: 'session' // Mark as in-memory session
+          type: 'session'
         };
       });
 
@@ -385,11 +594,9 @@ const chatController = {
       });
 
       const databaseConversations = dbOrders.map(order => {
-        // Get the first response as title, or use offense type
+        // Get the title from the response
         const firstResponse = order.responses[0];
-        const title = firstResponse
-          ? firstResponse.answer.substring(0, 50) + (firstResponse.answer.length > 50 ? '...' : '')
-          : `${order.offenseType} Case`;
+        const title = firstResponse ? firstResponse.title : `${order.offenseType} Case`;
 
         return {
           id: order.id, // Use database ID
@@ -450,10 +657,10 @@ const chatController = {
 
       console.log('📖 [DEBUG] Fetching conversation:', { userId, sessionId })
 
-      // First, try to get in-memory conversation
-      if (userConversations[userId] && userConversations[userId][sessionId]) {
-        const messages = userConversations[userId][sessionId];
-        console.log('📖 [DEBUG] Retrieved in-memory conversation:', {
+      // First, try to get Redis conversation
+      const messages = await redisHelpers.getConversation(userId, sessionId);
+      if (messages) {
+        console.log('📖 [DEBUG] Retrieved Redis conversation:', {
           sessionId,
           messageCount: messages.length
         })
@@ -478,51 +685,12 @@ const chatController = {
         });
 
         if (order) {
-          // Convert questionnaire responses to chat messages
-          const messages = [];
-
-          // Add welcome message
-          messages.push({
-            role: 'assistant',
-            content: "Hi, welcome to your consultation. This should take about 15 minutes to complete as I need important information. Are you ready to start?",
-            timestamp: order.createdAt
-          });
-
-          // Add user readiness response (assume "yes" for completed orders)
-          messages.push({
-            role: 'user',
-            content: 'Yes',
-            timestamp: order.createdAt
-          });
-
-          // Add questionnaire Q&A pairs
-          order.responses.forEach((response, index) => {
-            // Add assistant question
-            messages.push({
-              role: 'assistant',
-              content: response.question,
-              timestamp: response.createdAt
-            });
-
-            // Add user answer
-            messages.push({
-              role: 'user',
-              content: response.answer,
-              timestamp: response.createdAt
-            });
-          });
-
-          // Add completion message
-          messages.push({
-            role: 'assistant',
-            content: order.completionMessage || "Thank you for providing all that information. I've generated your mitigation statement and it will be available shortly.",
-            timestamp: order.updatedAt
-          });
+          // Parse the stored messages
+          const messages = JSON.parse(order.responses[0].messages);
 
           console.log('📖 [DEBUG] Retrieved database conversation:', {
             orderId: sessionId,
-            messageCount: messages.length,
-            responsesCount: order.responses.length
+            messageCount: messages.length
           });
 
           return res.json({ messages });
@@ -568,10 +736,10 @@ const chatController = {
 
       console.log('🗑️ [DEBUG] Soft deleting conversation:', { userId, sessionId });
 
-      // First, try to delete as in-memory session
-      if (userConversations[userId] && userConversations[userId][sessionId]) {
-        delete userConversations[userId][sessionId];
-        console.log('🗑️ [DEBUG] Permanently deleted session from memory');
+      // First, try to delete as Redis session
+      const deletedFromRedis = await redisHelpers.deleteConversation(userId, sessionId);
+      if (deletedFromRedis) {
+        console.log('🗑️ [DEBUG] Permanently deleted session from Redis');
         return res.json({ success: true, type: 'session' });
       }
 
@@ -739,3 +907,57 @@ const chatController = {
 };
 
 module.exports = chatController;
+
+// Start periodic auto-save for all active conversations
+setInterval(async () => {
+  try {
+    console.log('⏰ [AUTO-SAVE] Starting periodic save of active conversations...');
+
+    // Get all Redis keys matching chat pattern
+    const keys = await redisClient.keys('chat:*:*');
+
+    for (const key of keys) {
+      const [, userId, sessionId] = key.split(':');
+      const messages = await redisHelpers.getConversation(userId, sessionId);
+
+      if (messages && messages.length > 0) {
+        await autoSaveConversation(userId, sessionId, messages, false);
+      }
+    }
+
+    console.log('⏰ [AUTO-SAVE] Completed periodic save');
+  } catch (error) {
+    console.error('❌ Periodic auto-save error:', error);
+  }
+}, AUTO_SAVE_TIME_INTERVAL);
+
+// Graceful shutdown handling
+process.on('SIGTERM', async () => {
+  console.log('🛑 Received SIGTERM, saving all conversations before shutdown...');
+
+  try {
+    const keys = await redisClient.keys('chat:*:*');
+
+    for (const key of keys) {
+      const [, userId, sessionId] = key.split(':');
+      const messages = await redisHelpers.getConversation(userId, sessionId);
+
+      if (messages && messages.length > 0) {
+        await autoSaveConversation(userId, sessionId, messages, true);
+      }
+    }
+
+    console.log('✅ All conversations saved before shutdown');
+  } catch (error) {
+    console.error('❌ Error saving conversations on shutdown:', error);
+  }
+
+  await redisClient.quit();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('🛑 Received SIGINT, saving all conversations before shutdown...');
+  await redisClient.quit();
+  process.exit(0);
+});
