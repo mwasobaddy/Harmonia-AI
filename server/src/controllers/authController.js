@@ -102,6 +102,7 @@ const authController = {
           email: true,
           name: true,
           avatar: true,
+          role: true,
           isVerified: true,
           createdAt: true
         }
@@ -291,6 +292,7 @@ const authController = {
         email: user.email,
         name: user.name,
         avatar: user.avatar,
+        role: user.role,
         isVerified: user.isVerified,
         createdAt: user.createdAt
       };

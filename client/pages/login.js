@@ -100,8 +100,14 @@ export default function Login() {
         localStorage.setItem('authToken', loginData.token);
         window.dispatchEvent(new Event('authChange'));
         toast.success('Successfully signed in! Redirecting...');
+
+        // Redirect based on user role
         setTimeout(() => {
-          router.push('/chat');
+          if (loginData.user?.role === 'admin') {
+            router.push('/admin/dashboard');
+          } else {
+            router.push('/chat');
+          }
         }, 2000);
         return;
       }
@@ -135,8 +141,14 @@ export default function Login() {
             localStorage.setItem('authToken', newLoginData.token);
             window.dispatchEvent(new Event('authChange'));
             toast.success('Account created and signed in! Redirecting...');
+
+            // Redirect based on user role
             setTimeout(() => {
-              router.push('/chat');
+              if (newLoginData.user?.role === 'admin') {
+                router.push('/admin/dashboard');
+              } else {
+                router.push('/chat');
+              }
             }, 2000);
           } else {
             toast.error('Account created but login failed. Please try signing in again.');
