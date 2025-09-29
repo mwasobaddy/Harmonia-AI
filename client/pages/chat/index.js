@@ -290,35 +290,27 @@ export default function Chat() {
     conv.title.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleDeleteConversation = async (conversationId, isSessionChat) => {
+  const handleDeleteConversation = async (conversationId) => {
     try {
-      if (isSessionChat) {
-        // Permanent delete for session chats
-        await api.deleteConversation(conversationId)
-      } else {
-        // Soft delete for database chats - assuming there's a soft delete API
-        await api.softDeleteConversation(conversationId)
-      }
+      const response = await api.deleteConversation(conversationId)
+      const isPermanentDelete = response.type === 'session'
       setConversations(prev => prev.filter(conv => conv.sessionId !== conversationId))
       if (selectedConversation?.sessionId === conversationId) {
         setSelectedConversation(null)
         setMessages([])
       }
-      toast.success(isSessionChat ? 'Conversation permanently deleted' : 'Conversation soft deleted')
+      toast.success(isPermanentDelete ? 'Conversation permanently deleted' : 'Conversation soft deleted')
     } catch (error) {
       console.error('Error deleting conversation:', error)
       toast.error('Failed to delete conversation')
     }
   }
 
-  const handleDeleteSelectedConversations = async (selectedIds, sessionChatIds, dbChatIds) => {
+  const handleDeleteSelectedConversations = async (selectedIds) => {
     try {
-      // Permanent delete session chats
-      const sessionPromises = sessionChatIds.map(id => api.deleteConversation(id))
-      // Soft delete database chats
-      const dbPromises = dbChatIds.map(id => api.softDeleteConversation(id))
-      
-      await Promise.all([...sessionPromises, ...dbPromises])
+      // Delete all conversations - backend handles permanent vs soft delete
+      const deletePromises = selectedIds.map(id => api.deleteConversation(id))
+      await Promise.all(deletePromises)
       
       setConversations(prev => prev.filter(conv => !selectedIds.includes(conv.sessionId)))
       
