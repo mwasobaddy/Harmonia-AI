@@ -259,7 +259,7 @@ export default function ChatSidebar({
                   {getDisplayTitle(conversation)?.charAt(0)?.toUpperCase() || 'C'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-white truncate tracking-wide">{getDisplayTitle(conversation)}</h3>
+                  <h3 className="text-base font-semibold text-white truncate tracking-wide">{getDisplayTitle(conversation)}...</h3>
                   <p className="text-xs text-[#667781] mt-1">
                     {conversation.messageCount} messages
                     {conversation.type === 'draft' && ' • Draft'}
