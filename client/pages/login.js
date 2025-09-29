@@ -15,7 +15,6 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLogin, setIsLogin] = useState(true); // true for login, false for register
   const router = useRouter();
 
   // --- Animation Refs ---
@@ -66,49 +65,8 @@ export default function Login() {
     window.location.href = 'http://localhost:5000/api/auth/google';
   };
 
-  // --- Email/Password login handler ---
-  const handleEmailLogin = async (e) => {
-    e.preventDefault();
-    if (isLoading) return;
-
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    setIsLoading(true);
-    setLoadingText('Signing in...');
-    try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('authToken', data.token);
-        window.dispatchEvent(new Event('authChange'));
-        toast.success('Successfully logged in! Redirecting...');
-        setTimeout(() => {
-          router.push('/chat');
-        }, 2000);
-      } else {
-        toast.error(data.error || 'Login failed');
-      }
-    } catch (error) {
-      toast.error('Network error. Please try again.');
-    } finally {
-      setIsLoading(false);
-      setLoadingText('');
-    }
-  };
-
-  // --- Email/Password register handler ---
-  const handleEmailRegister = async (e) => {
+  // --- Unified Sign In handler ---
+  const handleSignIn = async (e) => {
     e.preventDefault();
     if (isLoading) return;
 
@@ -123,9 +81,11 @@ export default function Login() {
     }
 
     setIsLoading(true);
-    setLoadingText('Creating account...');
+    setLoadingText('Signing in...');
+
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      // First try to login
+      const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,13 +93,65 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const loginData = await loginResponse.json();
 
-      if (response.ok) {
-        toast.success('Account created successfully! Please log in.');
-        setIsLogin(true);
+      if (loginResponse.ok) {
+        // User exists and password is correct - login successful
+        localStorage.setItem('authToken', loginData.token);
+        window.dispatchEvent(new Event('authChange'));
+        toast.success('Successfully signed in! Redirecting...');
+        setTimeout(() => {
+          router.push('/chat');
+        }, 2000);
+        return;
+      }
+
+      // If login failed, try to register (assuming user doesn't exist)
+      if (!loginResponse.ok && loginResponse.status === 401) {
+        setLoadingText('Creating account...');
+        const registerResponse = await fetch('http://localhost:5000/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const registerData = await registerResponse.json();
+
+        if (registerResponse.ok) {
+          // Account created successfully, now login
+          const newLoginResponse = await fetch('http://localhost:5000/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const newLoginData = await newLoginResponse.json();
+
+          if (newLoginResponse.ok) {
+            localStorage.setItem('authToken', newLoginData.token);
+            window.dispatchEvent(new Event('authChange'));
+            toast.success('Account created and signed in! Redirecting...');
+            setTimeout(() => {
+              router.push('/chat');
+            }, 2000);
+          } else {
+            toast.error('Account created but login failed. Please try signing in again.');
+          }
+        } else {
+          // Handle different register failure reasons
+          if (registerData.error === 'User with this email already exists') {
+            toast.error('This email is already registered. Please try logging in with Google or use a different email.');
+          } else {
+            toast.error(registerData.error || 'Failed to create account');
+          }
+        }
       } else {
-        toast.error(data.error || 'Registration failed');
+        // Other login error (not 401)
+        toast.error(loginData.error || 'Sign in failed');
       }
     } catch (error) {
       toast.error('Network error. Please try again.');
@@ -175,14 +187,14 @@ export default function Login() {
             </div>
 
             <h2 className="text-center text-3xl font-extrabold text-white mb-2 tracking-tight">
-              {isLogin ? 'Sign in to your account' : 'Create your account'}
+              Sign in to your account
             </h2>
             <p className="text-center text-base text-[#73cfd0]/80 mb-6">
-              {isLogin ? 'Secure access to your legal mitigation dashboard' : 'Join Harmonia-AI for professional legal assistance'}
+              Enter your email and password to access your legal mitigation dashboard
             </p>
 
             {/* Email/Password Form */}
-            <form onSubmit={isLogin ? handleEmailLogin : handleEmailRegister} className="w-full mb-6">
+            <form onSubmit={handleSignIn} className="w-full mb-6">
               <div className="space-y-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-[#73cfd0] mb-1">
@@ -209,12 +221,12 @@ export default function Login() {
                       id="password"
                       name="password"
                       type={showPassword ? "text" : "password"}
-                      autoComplete={isLogin ? "current-password" : "new-password"}
+                      autoComplete="current-password"
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full px-4 py-3 pr-12 rounded-xl bg-[#1a3a4a] text-white border-2 border-[#73cfd0]/30 focus:outline-none focus:border-[#73cfd0] focus:ring-2 focus:ring-[#73cfd0]/20 placeholder-[#73cfd0]/70 transition-all duration-200"
-                      placeholder={isLogin ? "Enter your password" : "Create a password"}
+                      placeholder="Enter your password"
                     />
                     <button
                       type="button"
@@ -252,7 +264,7 @@ export default function Login() {
                     {loadingText}
                   </>
                 ) : (
-                  isLogin ? 'Sign In' : 'Create Account'
+                  'Sign In'
                 )}
               </Button>
             </form>
@@ -290,17 +302,6 @@ export default function Login() {
                 </>
               )}
             </Button>
-
-            {/* Toggle between Login/Register */}
-            <div className="text-center mb-4">
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-[#73cfd0] hover:text-white underline transition-colors"
-              >
-                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-              </button>
-            </div>
 
             <p className="text-xs text-[#73cfd0]/80 text-center mb-2">
               By signing in, you agree to our{' '}

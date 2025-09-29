@@ -20,29 +20,34 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('authChange', handleAuthChange)
   }, [])
 
-  // Fetch user profile if token is present and user is not set
-  useEffect(() => {
-    const token = localStorage.getItem('authToken')
-    if (token && !user) {
-      fetch('http://localhost:5000/api/auth/profile', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (data && data.user) setUser(data.user)
-        })
-        .catch(() => {})
-    }
-  }, [user])
-
-  const checkAuthStatus = () => {
+  const checkAuthStatus = async () => {
     const token = localStorage.getItem('authToken')
     if (token) {
-      setIsLoggedIn(true)
-      // You could also fetch user profile here
-      // fetchUserProfile(token)
+      try {
+        // Validate token with server
+        const response = await fetch('http://localhost:5000/api/auth/verify', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setUser(data.user)
+          setIsLoggedIn(true)
+        } else {
+          // Token is invalid, remove it
+          localStorage.removeItem('authToken')
+          setIsLoggedIn(false)
+          setUser(null)
+        }
+      } catch (error) {
+        // Network error or server down, keep token but don't assume logged in
+        console.warn('Auth validation failed:', error)
+        localStorage.removeItem('authToken')
+        setIsLoggedIn(false)
+        setUser(null)
+      }
     } else {
       setIsLoggedIn(false)
       setUser(null)
@@ -54,12 +59,15 @@ export function AuthProvider({ children }) {
     localStorage.setItem('authToken', token)
     setIsLoggedIn(true)
     if (userData) setUser(userData)
+    // Trigger auth status check to validate token and get user data
+    checkAuthStatus()
   }
 
   const logout = () => {
     localStorage.removeItem('authToken')
     setIsLoggedIn(false)
     setUser(null)
+    setLoading(false)
   }
 
   const value = {
