@@ -33,6 +33,10 @@ Thumbs.db
 .idea/
 .github/
 
+# Database files
+server/prisma/dev.db
+server/prisma/dev.db-journal
+
 # Project-specific ignores (from your list)
 main.py
 prd.txt
