@@ -14,7 +14,16 @@
   "devDependencies": {
     "concurrently": "^8.2.0"
   },
-  "keywords": ["legal", "mitigation", "ai", "claude", "pinecone"],
+  "keywords": [
+    "legal",
+    "mitigation",
+    "ai",
+    "claude",
+    "pinecone"
+  ],
   "author": "Harmonia-AI",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "gsap": "^3.13.0"
+  }
 }
