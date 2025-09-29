@@ -143,12 +143,12 @@ async function autoSaveConversation(userId, sessionId, messages, force = false) 
 
 // Helper function for title generation (extracted for reuse)
 function generateTitleFromMessage(message) {
-  if (!message || message.length === 0) return 'New Conversation';
+  if (!message || message.length === 0) return 'Starting consultation...';
 
   let cleanMessage = message.trim();
   cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '');
 
-  if (cleanMessage.length <= 3) return cleanMessage || 'New Conversation';
+  if (cleanMessage.length <= 3) return cleanMessage || 'Starting consultation...';
 
   let title = cleanMessage.substring(0, 25);
   const lastSpace = title.lastIndexOf(' ');
@@ -162,7 +162,7 @@ function generateTitleFromMessage(message) {
     title += '...';
   }
 
-  return title || 'New Conversation';
+  return title || 'Starting consultation...';
 }
 
 // Structured questions from main.py
@@ -557,11 +557,11 @@ const chatController = {
       // Get Redis conversations
       const redisConversations = await redisHelpers.getAllUserConversations(userId);
       const inMemoryConversations = Object.entries(redisConversations).map(([sessionId, messages]) => {
-        // Get the first user message as title, or use a default
-        const firstUserMessage = messages.find(msg => msg.role === 'user');
-        const title = firstUserMessage
-          ? firstUserMessage.content.substring(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '')
-          : 'New Conversation';
+        const userMessages = messages.filter(msg => msg.role === 'user');
+        let title = 'Starting consultation...';
+        if (userMessages.length >= 1) {
+          title = generateTitleFromMessage(userMessages[0]);
+        }
 
         // Get the last message timestamp (use current time as fallback)
         const lastMessage = messages[messages.length - 1];
@@ -636,8 +636,26 @@ const chatController = {
         };
       });
 
-      // Combine both types of conversations
-      const allConversations = [...inMemoryConversations, ...databaseConversations, ...draftConversations];
+      // Combine all conversations and deduplicate by sessionId
+      // Priority: completed orders > drafts > redis sessions
+      const conversationMap = new Map();
+
+      // Add Redis conversations (lowest priority)
+      inMemoryConversations.forEach(conv => {
+        conversationMap.set(conv.sessionId, conv);
+      });
+
+      // Add drafts (medium priority, will override Redis)
+      draftConversations.forEach(conv => {
+        conversationMap.set(conv.sessionId, conv);
+      });
+
+      // Add completed orders (highest priority, will override others)
+      databaseConversations.forEach(conv => {
+        conversationMap.set(conv.sessionId, conv);
+      });
+
+      const allConversations = Array.from(conversationMap.values());
 
       // Sort by last message time (most recent first)
       allConversations.sort((a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime));
