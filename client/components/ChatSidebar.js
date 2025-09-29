@@ -1,16 +1,18 @@
-import { useRouter } from 'next/router'
-import Link from 'next/link'
-import { useState } from 'react'
-import { Plus, Search, Trash2, CheckSquare, Square } from 'lucide-react'
-import Modal from './Modal'
 
-export default function ChatSidebar({ 
-  conversations = [], 
-  onSelectConversation, 
-  selectedId, 
-  onNewConversation, 
-  searchTerm, 
-  setSearchTerm, 
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import { useState, useRef, useEffect } from 'react';
+import { Plus, Search, Trash2, CheckSquare, Square } from 'lucide-react';
+import Modal from './Modal';
+import gsap from 'gsap';
+
+export default function ChatSidebar({
+  conversations = [],
+  onSelectConversation,
+  selectedId,
+  onNewConversation,
+  searchTerm,
+  setSearchTerm,
   loading,
   selectedConversations = new Set(),
   setSelectedConversations,
@@ -19,7 +21,7 @@ export default function ChatSidebar({
   onDeleteConversation,
   onDeleteSelectedConversations
 }) {
-  const router = useRouter()
+  const router = useRouter();
   const [modalState, setModalState] = useState({
     isOpen: false,
     icon: null,
@@ -30,7 +32,18 @@ export default function ChatSidebar({
     iconColor: 'text-blue-500',
     titleColor: 'text-gray-900',
     confirmButtonColor: 'bg-blue-500 hover:bg-blue-600'
-  })
+  });
+  // Sidebar animation ref
+  const sidebarRef = useRef(null);
+  useEffect(() => {
+    if (sidebarRef.current) {
+      gsap.fromTo(
+        sidebarRef.current,
+        { x: -40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
+      );
+    }
+  }, []);
 
   const handleSelectConversation = (conversationId) => {
     if (isSelectionMode) {
@@ -48,8 +61,10 @@ export default function ChatSidebar({
     }
   }
 
-  // Format conversation titles consistently with chat page
-  const formatTitleForDisplay = (message) => {
+
+
+  // Generate a concise title from a user message (same as chat page)
+  const generateTitleFromMessage = (message) => {
     if (!message || message.length === 0) return 'New Conversation'
 
     let cleanMessage = message.trim()
@@ -57,7 +72,7 @@ export default function ChatSidebar({
 
     if (cleanMessage.length <= 3) return cleanMessage || 'New Conversation'
 
-    let title = cleanMessage.substring(0, 40)
+    let title = cleanMessage.substring(0, 25)
     const lastSpace = title.lastIndexOf(' ')
     if (lastSpace > 10) {
       title = title.substring(0, lastSpace)
@@ -70,6 +85,24 @@ export default function ChatSidebar({
     }
 
     return title || 'New Conversation'
+  }
+
+  // Get the display title for a conversation, using the second user message if needed
+  const getDisplayTitle = (conversation) => {
+    // If the title is missing or generic, try to generate from the second user message
+    const genericTitles = ['New Conversation', 'Conversation', '', null, undefined];
+    if (genericTitles.includes(conversation.title)) {
+      // If conversation.messages exists and has at least 2 user messages, use the second one
+      if (Array.isArray(conversation.messages)) {
+        const userMessages = conversation.messages.filter(msg => msg.role === 'user');
+        if (userMessages.length >= 2) {
+          return generateTitleFromMessage(userMessages[1].content);
+        }
+      }
+      // fallback
+      return 'New Conversation';
+    }
+    return generateTitleFromMessage(conversation.title);
   }
 
   const handleDeleteConversation = async (conversation) => {
@@ -124,18 +157,23 @@ export default function ChatSidebar({
     setSelectedConversations(new Set())
   }
   return (
-    <div className="w-full md:w-[380px] max-w-full md:max-w-[380px] flex flex-col min-h-0 bg-[#0f2b2fcc] border-r border-[#222d34] flex-1">
+    <div
+      ref={sidebarRef}
+      className="w-full md:w-[380px] max-w-full md:max-w-[380px] flex flex-col min-h-0 bg-gradient-to-b from-[#0f2b2fcc] to-[#1a2332] border-r border-[#222d34] flex-1 shadow-xl"
+    >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#222d34] bg-[#202c33]">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-[#222d34] bg-[#202c33]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#25d366] flex items-center justify-center text-white font-bold text-lg">U</div>
-          <Link href="/chat" className="text-white font-semibold text-lg">Chats</Link>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#25d366] to-[#73cfd0] flex items-center justify-center text-white font-bold text-lg shadow-md">
+            U
+          </div>
+          <Link href="/chat" className="text-white font-semibold text-lg tracking-wide">Chats</Link>
         </div>
         <div className="flex items-center gap-2">
           {isSelectionMode && selectedConversations.size > 0 && (
             <button
               onClick={handleDeleteSelected}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 transition-colors shadow"
               title="Delete Selected"
             >
               <Trash2 className="h-4 w-4 text-white" />
@@ -143,7 +181,7 @@ export default function ChatSidebar({
           )}
           <button
             onClick={toggleSelectionMode}
-            className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+            className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors shadow ${
               isSelectionMode ? 'bg-[#25d366] hover:bg-[#1fa855]' : 'bg-gray-500 hover:bg-gray-600'
             }`}
             title={isSelectionMode ? "Exit Selection Mode" : "Enter Selection Mode"}
@@ -152,7 +190,7 @@ export default function ChatSidebar({
           </button>
           <button
             onClick={onNewConversation}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-[#25d366] hover:bg-[#1fa855] transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-[#25d366] to-[#73cfd0] hover:from-[#73cfd0] hover:to-[#25d366] transition-colors shadow"
             title="New Chat"
           >
             <Plus className="h-4 w-4 text-white" />
@@ -160,7 +198,7 @@ export default function ChatSidebar({
         </div>
       </div>
       {/* Search */}
-      <div className="px-4 py-2 bg-[#0f2b2fcc] border-b border-[#222d34]">
+      <div className="px-4 py-3 bg-[#0f2b2fcc] border-b border-[#222d34]">
         <div className="relative">
           <Search className="h-4 w-4 absolute left-3 top-3 text-[#667781]" />
           <input
@@ -168,12 +206,12 @@ export default function ChatSidebar({
             placeholder="Search or start new chat"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#2a3942] text-white border-none focus:outline-none focus:ring-2 focus:ring-[#25d366] placeholder-[#667781]"
+            className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#2a3942] text-white border-none focus:outline-none focus:ring-2 focus:ring-[#25d366] placeholder-[#667781] shadow"
           />
         </div>
       </div>
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto bg-[#0f2b2fcc]">
+      <div className="flex-1 overflow-y-auto bg-[#0f2b2fcc] custom-scrollbar">
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <span className="text-[#667781]">Loading...</span>
@@ -193,7 +231,7 @@ export default function ChatSidebar({
             <div
               key={conversation.sessionId}
               className={`group flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[#222d34] transition-colors ${
-                selectedId === conversation.sessionId ? 'bg-[#202c33]' : 'hover:bg-[#222d34]'
+                selectedId === conversation.sessionId ? 'bg-[#202c33] shadow-inner' : 'hover:bg-[#222d34]'
               }`}
             >
               {isSelectionMode && (
@@ -208,11 +246,11 @@ export default function ChatSidebar({
                 className="flex-1 flex items-center gap-3"
                 onClick={() => !isSelectionMode && onSelectConversation(conversation.sessionId)}
               >
-                <div className="w-10 h-10 rounded-full bg-[#25d366] flex items-center justify-center text-white font-bold text-lg">
-                  {formatTitleForDisplay(conversation.title)?.charAt(0)?.toUpperCase() || 'C'}
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#25d366] to-[#73cfd0] flex items-center justify-center text-white font-bold text-lg shadow">
+                  {getDisplayTitle(conversation)?.charAt(0)?.toUpperCase() || 'C'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-medium text-white truncate">{formatTitleForDisplay(conversation.title)}</h3>
+                  <h3 className="text-base font-semibold text-white truncate tracking-wide">{getDisplayTitle(conversation)}</h3>
                   <p className="text-xs text-[#667781] mt-1">
                     {conversation.messageCount} messages
                     {conversation.type === 'draft' && ' • Draft'}
@@ -227,10 +265,10 @@ export default function ChatSidebar({
               {!isSelectionMode && (
                 <button
                   onClick={(e) => {
-                    e.stopPropagation()
-                    handleDeleteConversation(conversation)
+                    e.stopPropagation();
+                    handleDeleteConversation(conversation);
                   }}
-                  className="w-6 h-6 flex items-center justify-center rounded-full bg-gray-600 hover:bg-red-500 transition-colors"
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-gray-600 hover:bg-red-500 transition-colors shadow"
                   title="Delete Conversation"
                 >
                   <Trash2 className="h-3 w-3 text-white" />
