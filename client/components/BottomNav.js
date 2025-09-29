@@ -21,7 +21,7 @@ const BottomNav = () => {
   const visibleNavItems = navItems.filter(item => item.alwaysVisible || isLoggedIn);
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
+    <div className="lg:hidden sticky bottom-0 left-0 right-0 z-50">
       <div className="bg-gradient-to-r from-[#0f1419]/95 to-[#1a2332]/95 backdrop-blur-xl border-t border-white/10 shadow-2xl">
         <div className="flex justify-around items-center py-2 px-2">
           {visibleNavItems.map((item) => {

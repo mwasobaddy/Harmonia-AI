@@ -65,12 +65,12 @@ export default function ChatSidebar({
 
   // Generate a concise title from a user message (same as chat page)
   const generateTitleFromMessage = (message) => {
-    if (!message || message.length === 0) return 'New Conversation'
+    if (!message || message.length === 0) return 'Starting consultation...'
 
     let cleanMessage = message.trim()
     cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '')
 
-    if (cleanMessage.length <= 3) return cleanMessage || 'New Conversation'
+    if (cleanMessage.length <= 3) return cleanMessage || 'Starting consultation...'
 
     let title = cleanMessage.substring(0, 25)
     const lastSpace = title.lastIndexOf(' ')
@@ -84,7 +84,7 @@ export default function ChatSidebar({
       title += '...'
     }
 
-    return title || 'New Conversation'
+    return title || 'Starting consultation...'
   }
 
   // Get the display title for a conversation, using the second user message if needed
@@ -99,10 +99,10 @@ export default function ChatSidebar({
         }
       }
       // fallback
-      return 'New Conversation';
+      return 'Starting consultation...';
     }
     // For drafts, use the existing title logic
-    const genericTitles = ['New Conversation', 'Conversation', '', null, undefined];
+    const genericTitles = ['Starting consultation...', '', null, undefined];
     if (genericTitles.includes(conversation.title)) {
       // If conversation.messages exists and has at least 2 user messages, use the second one
       if (Array.isArray(conversation.messages)) {
@@ -112,7 +112,7 @@ export default function ChatSidebar({
         }
       }
       // fallback
-      return 'New Conversation';
+      return 'Starting consultation...';
     }
     return generateTitleFromMessage(conversation.title);
   }

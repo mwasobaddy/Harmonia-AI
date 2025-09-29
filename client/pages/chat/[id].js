@@ -53,14 +53,14 @@ export default function Chat() {
 
     // Generate a concise title from a user message
     const generateTitleFromMessage = (message) => {
-        if (!message || message.length === 0) return 'New Conversation'
+        if (!message || message.length === 0) return 'Starting consultation...'
 
         // Clean the message: remove extra whitespace, punctuation at start/end
         let cleanMessage = message.trim()
         cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '')
 
         // If message is too short, return it as is
-        if (cleanMessage.length <= 3) return cleanMessage || 'New Conversation'
+        if (cleanMessage.length <= 3) return cleanMessage || 'Starting consultation...'
 
         // Take first 25 characters, but try to break at word boundaries
         let title = cleanMessage.substring(0, 25)
@@ -79,7 +79,7 @@ export default function Chat() {
             title += '...'
         }
 
-        return title || 'New Conversation'
+        return title || 'Starting consultation...'
     }
 
     const handleSelectConversation = (conversationId) => {
@@ -91,7 +91,7 @@ export default function Chat() {
     const handleNewConversation = async () => {
         // Check if there's already a blank conversation that hasn't been started
         const blankConversation = conversations.find(conv =>
-            conv.title === 'New Conversation' &&
+            conv.title === 'Starting consultation...' &&
             conv.messageCount <= 1 &&
             !conv.isCompleted
         )
@@ -189,7 +189,7 @@ export default function Chat() {
 
                 // Check if we need to generate a title from existing messages
                 const userMessages = data.messages.filter(msg => msg.role === 'user')
-                if (userMessages.length >= 2 && (!data.title || data.title === 'New Conversation' || data.title === 'Conversation')) {
+                if (userMessages.length >= 2 && (!data.title || data.title === 'Starting consultation...')) {
                     const secondUserMessage = userMessages[1].content
                     const generatedTitle = generateTitleFromMessage(secondUserMessage)
 
@@ -211,7 +211,7 @@ export default function Chat() {
 
             // Set conversation details
             const userMessages = data.messages ? data.messages.filter(msg => msg.role === 'user') : []
-            const finalTitle = data.title && data.title !== 'New Conversation' && data.title !== 'Conversation'
+            const finalTitle = data.title && data.title !== 'Starting consultation...'
                 ? data.title
                 : (userMessages.length >= 2 ? generateTitleFromMessage(userMessages[1].content) : 'Starting consultation...')
             setConversation({ sessionId: id, title: finalTitle, isCompleted: data.isCompleted || false })
@@ -421,7 +421,7 @@ export default function Chat() {
                         </button>
                         <div className="w-10 h-10 rounded-full bg-[#73cfd0] flex items-center justify-center text-black font-bold text-lg">{conversation?.title?.charAt(0)?.toUpperCase() || 'C'}</div>
                         <div className="flex flex-col">
-                            <span className="text-white font-semibold text-lg">{conversation?.title || 'Conversation'}</span>
+                            <span className="text-white font-semibold text-lg">{conversation?.title || 'Starting consultation...'}</span>
                             <span className="text-[#73cfd0] text-xs">{conversation?.isCompleted ? 'Completed' : 'In Progress'}</span>
                             {autoSaveStatus && (
                                 <span className={`text-xs mt-1 ${autoSaveStatus.includes('failed') ? 'text-red-400' : 'text-green-400'}`}>

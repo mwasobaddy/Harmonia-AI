@@ -27,14 +27,14 @@ export default function Chat() {
 
     // Generate a concise title from a user message (copied from [id].js for consistency)
     const generateTitleFromMessage = (message) => {
-      if (!message || message.length === 0) return 'New Conversation'
+      if (!message || message.length === 0) return 'Starting consultation...'
 
       // Clean the message: remove extra whitespace, punctuation at start/end
       let cleanMessage = message.trim()
       cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '')
 
       // If message is too short, return it as is
-      if (cleanMessage.length <= 3) return cleanMessage || 'New Conversation'
+      if (cleanMessage.length <= 3) return cleanMessage || 'Starting consultation...'
 
       // Take first 25 characters, but try to break at word boundaries
       let title = cleanMessage.substring(0, 25)
@@ -53,7 +53,7 @@ export default function Chat() {
         title += '...'
       }
 
-      return title || 'New Conversation'
+      return title || 'Starting consultation...'
     }
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -146,7 +146,7 @@ export default function Chat() {
   const createNewConversation = async () => {
     // Check if there's already a blank conversation that hasn't been started
     const blankConversation = conversations.find(conv =>
-      generateTitleFromMessage(conv.title) === 'New Conversation' &&
+      generateTitleFromMessage(conv.title) === 'Starting consultation...' &&
       conv.messageCount <= 1 &&
       !conv.isCompleted
     )
