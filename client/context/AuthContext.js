@@ -11,6 +11,15 @@ export function AuthProvider({ children }) {
     checkAuthStatus()
   }, [])
 
+  // Listen for auth changes (e.g., login/logout)
+  useEffect(() => {
+    const handleAuthChange = () => {
+      checkAuthStatus()
+    }
+    window.addEventListener('authChange', handleAuthChange)
+    return () => window.removeEventListener('authChange', handleAuthChange)
+  }, [])
+
   // Fetch user profile if token is present and user is not set
   useEffect(() => {
     const token = localStorage.getItem('authToken')
