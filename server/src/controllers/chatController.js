@@ -761,6 +761,28 @@ const chatController = {
       const deletedFromRedis = await redisHelpers.deleteConversation(userId, sessionId);
       if (deletedFromRedis) {
         console.log('🗑️ [DEBUG] Permanently deleted session from Redis');
+
+        // Also delete any corresponding draft with the same sessionId
+        try {
+          const draft = await prisma.draftConversation.findFirst({
+            where: {
+              sessionId,
+              userId,
+              deletedAt: null
+            }
+          });
+
+          if (draft) {
+            await prisma.draftConversation.update({
+              where: { id: draft.id },
+              data: { deletedAt: new Date() }
+            });
+            console.log('🗑️ [DEBUG] Also soft deleted corresponding draft from database:', sessionId);
+          }
+        } catch (draftError) {
+          console.log('🗑️ [DEBUG] Could not delete corresponding draft:', draftError.message);
+        }
+
         return res.json({ success: true, type: 'session' });
       }
 
