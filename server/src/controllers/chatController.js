@@ -675,8 +675,35 @@ const chatController = {
         return res.status(400).json({ error: 'Invalid request data' });
       }
 
-      // Generate a title if not provided
-      const draftTitle = title || (messages.length > 1 ? messages[1]?.content?.substring(0, 50) + '...' : 'Draft Conversation');
+      // Generate a title from the second user message if not provided
+      let draftTitle = title;
+      if (!draftTitle && Array.isArray(messages)) {
+        const userMessages = messages.filter(msg => msg.role === 'user');
+        if (userMessages.length >= 2) {
+          // Use the second user message (first substantive response)
+          const secondUserMessage = userMessages[1].content;
+          // Clean and truncate like in the frontend
+          let cleanMessage = secondUserMessage.trim();
+          cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '');
+          
+          if (cleanMessage.length <= 3) {
+            draftTitle = cleanMessage || 'Draft Conversation';
+          } else {
+            let titleText = cleanMessage.substring(0, 25);
+            const lastSpace = titleText.lastIndexOf(' ');
+            if (lastSpace > 10) {
+              titleText = titleText.substring(0, lastSpace);
+            }
+            titleText = titleText.charAt(0).toUpperCase() + titleText.slice(1).toLowerCase();
+            if (titleText.length < cleanMessage.length) {
+              titleText += '...';
+            }
+            draftTitle = titleText || 'Draft Conversation';
+          }
+        } else {
+          draftTitle = 'Draft Conversation';
+        }
+      }
 
       // Save or update the draft conversation
       const draft = await prisma.draftConversation.upsert({
