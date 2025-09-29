@@ -143,7 +143,10 @@ async function autoSaveConversation(userId, sessionId, messages, force = false) 
 
 // Helper function for title generation (extracted for reuse)
 function generateTitleFromMessage(message) {
-  if (!message || message.length === 0) return 'Starting consultation...';
+  // Handle null, undefined, or non-string inputs
+  if (!message || typeof message !== 'string' || message.length === 0) {
+    return 'Starting consultation...';
+  }
 
   let cleanMessage = message.trim();
   cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '');
@@ -559,8 +562,8 @@ const chatController = {
       const inMemoryConversations = Object.entries(redisConversations).map(([sessionId, messages]) => {
         const userMessages = messages.filter(msg => msg.role === 'user');
         let title = 'Starting consultation...';
-        if (userMessages.length >= 1) {
-          title = generateTitleFromMessage(userMessages[0]);
+        if (userMessages.length >= 1 && userMessages[0].content) {
+          title = generateTitleFromMessage(userMessages[0].content);
         }
 
         // Get the last message timestamp (use current time as fallback)
@@ -623,7 +626,7 @@ const chatController = {
       });
 
       const draftConversations = dbDrafts.map(draft => {
-        const messages = JSON.parse(draft.messages);
+        const messages = JSON.parse(draft.messages || '[]');
         return {
           id: draft.id,
           sessionId: draft.sessionId,
