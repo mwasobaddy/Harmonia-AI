@@ -433,6 +433,25 @@ const chatController = {
               responseCount: formattedResponses.length
             });
 
+            // Delete any existing draft conversations for this completed questionnaire
+            try {
+              const deletedDrafts = await prisma.draftConversation.deleteMany({
+                where: {
+                  userId: userId,
+                  sessionId: currentSessionId
+                }
+              });
+              if (deletedDrafts.count > 0) {
+                console.log('🗑️ [DEBUG] Deleted draft conversations after completion:', {
+                  sessionId: currentSessionId,
+                  deletedCount: deletedDrafts.count
+                });
+              }
+            } catch (draftDeleteError) {
+              console.error('❌ [DEBUG] Failed to delete draft conversations:', draftDeleteError);
+              // Don't fail the request if draft deletion fails
+            }
+
           } catch (dbError) {
             console.error('❌ [DEBUG] Failed to store questionnaire in database:', dbError);
             // Continue with response even if database storage fails
@@ -496,6 +515,25 @@ const chatController = {
               orderId: order.id,
               responseCount: formattedResponses.length
             });
+
+            // Delete any existing draft conversations for this completed questionnaire
+            try {
+              const deletedDrafts = await prisma.draftConversation.deleteMany({
+                where: {
+                  userId: userId,
+                  sessionId: currentSessionId
+                }
+              });
+              if (deletedDrafts.count > 0) {
+                console.log('🗑️ [DEBUG] Deleted draft conversations after completion (error path):', {
+                  sessionId: currentSessionId,
+                  deletedCount: deletedDrafts.count
+                });
+              }
+            } catch (draftDeleteError) {
+              console.error('❌ [DEBUG] Failed to delete draft conversations (error path):', draftDeleteError);
+              // Don't fail the request if draft deletion fails
+            }
 
           } catch (dbError) {
             console.error('❌ [DEBUG] Failed to store questionnaire in database:', dbError);
