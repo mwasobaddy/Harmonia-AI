@@ -25,6 +25,36 @@ export default function Chat() {
   const router = useRouter()
   const { isLoggedIn, loading } = useAuth()
 
+    // Generate a concise title from a user message (copied from [id].js for consistency)
+    const generateTitleFromMessage = (message) => {
+      if (!message || message.length === 0) return 'New Conversation'
+
+      // Clean the message: remove extra whitespace, punctuation at start/end
+      let cleanMessage = message.trim()
+      cleanMessage = cleanMessage.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '')
+
+      // If message is too short, return it as is
+      if (cleanMessage.length <= 3) return cleanMessage || 'New Conversation'
+
+      // Take first 25 characters, but try to break at word boundaries
+      let title = cleanMessage.substring(0, 25)
+      const lastSpace = title.lastIndexOf(' ')
+
+      // If we have a space and it's not too close to the start, break there
+      if (lastSpace > 10) {
+        title = title.substring(0, lastSpace)
+      }
+
+      // Capitalize first letter
+      title = title.charAt(0).toUpperCase() + title.slice(1).toLowerCase()
+
+      // Add ellipsis if truncated
+      if (title.length < cleanMessage.length) {
+        title += '...'
+      }
+
+      return title || 'New Conversation'
+    }
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -116,7 +146,7 @@ export default function Chat() {
   const createNewConversation = async () => {
     // Check if there's already a blank conversation that hasn't been started
     const blankConversation = conversations.find(conv =>
-      conv.title === 'New Conversation' &&
+      generateTitleFromMessage(conv.title) === 'New Conversation' &&
       conv.messageCount <= 1 &&
       !conv.isCompleted
     )
@@ -133,7 +163,7 @@ export default function Chat() {
         const newConversation = {
           id: data.sessionId, // Set id for consistency with backend
           sessionId: data.sessionId,
-          title: 'New Conversation',
+          title: generateTitleFromMessage(''),
           messageCount: 0,
           lastMessageTime: new Date().toISOString(),
           isCompleted: false
@@ -253,7 +283,10 @@ export default function Chat() {
     }
   }
 
-  const filteredConversations = conversations.filter(conv =>
+  const filteredConversations = conversations.map(conv => ({
+    ...conv,
+    title: generateTitleFromMessage(conv.title)
+  })).filter(conv =>
     conv.title.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -333,7 +366,7 @@ export default function Chat() {
             <div className="w-32 h-32 rounded-full bg-[#73cfd0] flex items-center justify-center mb-6">
               <MessageCircle className="h-16 w-16 text-black" />
             </div>
-            <h1 className="text-3xl font-bold text-black mb-2">Welcome to Harmonia-AI</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">Welcome to Harmonia-AI</h1>
             <p className="text-[#73cfd0] text-lg text-center max-w-md mb-4">Start a new conversation or select an existing chat from the sidebar. Your legal AI assistant is ready to help!</p>
           </div>
         </div>
