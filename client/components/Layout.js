@@ -18,7 +18,7 @@ export default function Layout({
         <link rel="icon" href="/logo.png" />
       </Head>
 
-      <div className="min-h-screen flex flex-col h-screen">
+      <div className="min-h-screen flex flex-col h-screen bg-[#0f1419]">
         <Header />
         <main className="flex-1 min-h-0 h-full flex flex-col overflow-y-auto">
           {children}
