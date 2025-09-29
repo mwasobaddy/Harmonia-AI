@@ -51,18 +51,18 @@ export default function Login() {
         <link rel="icon" href="/logo.png" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-[#0f2b2fcc] flex flex-col">
         <Header />
 
         <main className="max-w-md mx-auto py-16 px-4 sm:px-6 lg:px-8 flex-1">
-          <div className="bg-white py-8 px-6 shadow rounded-lg sm:px-10">
+          <div className="bg-[#2a4a5a] py-8 px-6 shadow rounded-lg sm:px-10 border border-[#73cfd0]/20">
             <div className="mb-8">
-              <h2 className="text-center text-3xl font-extrabold text-gray-900">
+              <h2 className="text-center text-3xl font-extrabold text-white">
                 Sign in to your account
               </h2>
-              <p className="mt-2 text-center text-sm text-gray-600">
+              <p className="mt-2 text-center text-sm text-[#73cfd0]/80">
                 Or{' '}
-                <Link href="/contact" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link href="/contact" className="font-medium text-[#73cfd0] hover:text-white">
                   contact us for assistance
                 </Link>
               </p>
@@ -81,7 +81,7 @@ export default function Login() {
             )} */}
 
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-6">
+              <p className="text-sm text-[#73cfd0]/80 mb-6">
                 Sign in with your Google account to access our legal mitigation services.
               </p>
 
@@ -110,22 +110,22 @@ export default function Login() {
                 )}
               </Button>
 
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-[#73cfd0]/80">
                 By signing in, you agree to our{' '}
-                <Link href="/terms" className="text-blue-600 hover:text-blue-500">
+                <Link href="/terms" className="text-[#73cfd0] hover:text-white">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link href="/privacy" className="text-blue-600 hover:text-blue-500">
+                <Link href="/privacy" className="text-[#73cfd0] hover:text-white">
                   Privacy Policy
                 </Link>
               </p>
             </div>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[#73cfd0]/80">
                 Don't have an account?{' '}
-                <Link href="/contact" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link href="/contact" className="font-medium text-[#73cfd0] hover:text-white">
                   Contact us
                 </Link>
               </p>
