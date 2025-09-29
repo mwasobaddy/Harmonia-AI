@@ -25,7 +25,9 @@ export default function AdminDashboard() {
     pendingReviews: 0,
     activeConversations: 0
   });
+  const [activities, setActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingActivities, setIsLoadingActivities] = useState(true);
   const router = useRouter();
   const { isLoggedIn, loading, user } = useAuth();
 
@@ -54,6 +56,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (isLoggedIn && user?.role === 'admin') {
       loadDashboardStats();
+      loadRecentActivities();
     }
   }, [isLoggedIn, user]);
 
@@ -97,6 +100,57 @@ export default function AdminDashboard() {
       console.error('Error loading dashboard stats:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadRecentActivities = async () => {
+    try {
+      setIsLoadingActivities(true);
+
+      // Fetch recent activities
+      const response = await fetch('http://localhost:5000/api/chat/admin/recent-activity', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setActivities(data.activities || []);
+      } else {
+        console.error('Failed to load recent activities');
+      }
+    } catch (error) {
+      console.error('Error loading recent activities:', error);
+    } finally {
+      setIsLoadingActivities(false);
+    }
+  };
+
+  const formatTimeAgo = (timestamp) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffInSeconds = Math.floor((now - time) / 1000);
+
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    return time.toLocaleDateString();
+  };
+
+  const getActivityIcon = (iconType) => {
+    switch (iconType) {
+      case 'user':
+        return <Users className="h-4 w-4 text-blue-400" />;
+      case 'order':
+        return <FileText className="h-4 w-4 text-green-400" />;
+      case 'document':
+        return <Activity className="h-4 w-4 text-yellow-400" />;
+      case 'review':
+        return <Shield className="h-4 w-4 text-purple-400" />;
+      default:
+        return <MessageSquare className="h-4 w-4 text-gray-400" />;
     }
   };
 
@@ -197,6 +251,20 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* Refresh Stats Button */}
+          <div className="mb-6 text-center">
+            <button
+              onClick={() => {
+                loadDashboardStats();
+                loadRecentActivities();
+              }}
+              disabled={isLoading}
+              className="px-4 py-2 bg-[#73cfd0] text-black rounded-lg hover:bg-white transition-colors duration-200 disabled:opacity-50 font-medium"
+            >
+              {isLoading ? 'Refreshing...' : 'Refresh Dashboard'}
+            </button>
+          </div>
+
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {adminMenuItems.map((item, index) => (
@@ -214,36 +282,52 @@ export default function AdminDashboard() {
 
           {/* Recent Activity */}
           <div className="mt-8 bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-[#73cfd0]/20">
-            <div className="flex items-center gap-3 mb-6">
-              <TrendingUp className="h-6 w-6 text-[#73cfd0]" />
-              <h2 className="text-2xl font-bold text-white">Recent Activity</h2>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="h-6 w-6 text-[#73cfd0]" />
+                <h2 className="text-2xl font-bold text-white">Recent Activity</h2>
+              </div>
+              <button
+                onClick={loadRecentActivities}
+                disabled={isLoadingActivities}
+                className="px-3 py-1 bg-[#73cfd0]/20 hover:bg-[#73cfd0]/30 rounded-lg text-[#73cfd0] text-sm transition-colors duration-200 disabled:opacity-50"
+              >
+                {isLoadingActivities ? 'Loading...' : 'Refresh'}
+              </button>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-[#73cfd0]/20">
-                <div>
-                  <p className="text-white font-medium">New user registration</p>
-                  <p className="text-[#73cfd0]/60 text-sm">john.doe@example.com joined the platform</p>
-                </div>
-                <span className="text-[#73cfd0]/60 text-sm">2 hours ago</span>
+            {isLoadingActivities ? (
+              <div className="flex items-center justify-center py-8">
+                <LoadingSpinner />
               </div>
-
-              <div className="flex items-center justify-between py-3 border-b border-[#73cfd0]/20">
-                <div>
-                  <p className="text-white font-medium">Document submitted for review</p>
-                  <p className="text-[#73cfd0]/60 text-sm">Order #1234 requires approval</p>
-                </div>
-                <span className="text-[#73cfd0]/60 text-sm">4 hours ago</span>
+            ) : activities.length > 0 ? (
+              <div className="space-y-4">
+                {activities.map((activity, index) => (
+                  <div
+                    key={activity.id}
+                    className={`flex items-center justify-between py-3 ${
+                      index < activities.length - 1 ? 'border-b border-[#73cfd0]/20' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {getActivityIcon(activity.icon)}
+                      <div>
+                        <p className="text-white font-medium">{activity.title}</p>
+                        <p className="text-[#73cfd0]/60 text-sm">{activity.description}</p>
+                      </div>
+                    </div>
+                    <span className="text-[#73cfd0]/60 text-sm">
+                      {formatTimeAgo(activity.timestamp)}
+                    </span>
+                  </div>
+                ))}
               </div>
-
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-white font-medium">System maintenance completed</p>
-                  <p className="text-[#73cfd0]/60 text-sm">All services are running normally</p>
-                </div>
-                <span className="text-[#73cfd0]/60 text-sm">1 day ago</span>
+            ) : (
+              <div className="text-center py-8">
+                <Activity className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-gray-400">No recent activity to display</p>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>

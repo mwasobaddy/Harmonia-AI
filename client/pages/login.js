@@ -46,9 +46,39 @@ export default function Login() {
       localStorage.setItem('authToken', token);
       window.dispatchEvent(new Event('authChange'));
       toast.success('Successfully logged in! Redirecting...');
-      setTimeout(() => {
-        router.push('/chat');
-      }, 2000);
+
+      // Fetch user profile to check role
+      const fetchProfileAndRedirect = async () => {
+        try {
+          const response = await fetch('http://localhost:5000/api/auth/profile', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          const data = await response.json();
+          if (response.ok && data.user) {
+            setTimeout(() => {
+              if (data.user.role === 'admin') {
+                router.push('/admin/dashboard');
+              } else {
+                router.push('/chat');
+              }
+            }, 2000);
+          } else {
+            // Fallback to /chat if profile fetch fails
+            setTimeout(() => {
+              router.push('/chat');
+            }, 2000);
+          }
+        } catch (error) {
+          console.error('Failed to fetch profile:', error);
+          setTimeout(() => {
+            router.push('/chat');
+          }, 2000);
+        }
+      };
+
+      fetchProfileAndRedirect();
     } else if (successParam === 'true') {
       toast.success('Login successful!');
     } else if (errorParam) {

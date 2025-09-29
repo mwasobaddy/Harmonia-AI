@@ -1005,6 +1005,47 @@ const chatController = {
       console.error('❌ [DEBUG] Error saving draft:', error);
       res.status(500).json({ error: 'Failed to save draft' });
     }
+  },
+
+  // Admin: Get platform statistics
+  getAdminStats: async (req, res) => {
+    try {
+      // Check if user is admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      // Get user statistics
+      const totalUsers = await prisma.user.count();
+
+      // Get order statistics
+      const totalOrders = await prisma.order.count();
+
+      // Get pending reviews (documents with PENDING_REVIEW status)
+      const pendingReviews = await prisma.document.count({
+        where: { status: 'PENDING_REVIEW' }
+      });
+
+      // Get active conversations (Redis keys)
+      let activeConversations = 0;
+      try {
+        const keys = await redisClient.keys('chat:*:*');
+        activeConversations = keys.length;
+      } catch (redisError) {
+        console.warn('Redis error getting active conversations:', redisError);
+        activeConversations = 0;
+      }
+
+      res.json({
+        totalUsers,
+        totalOrders,
+        pendingReviews,
+        activeConversations
+      });
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+      res.status(500).json({ error: 'Failed to fetch statistics' });
+    }
   }
 };
 
@@ -1057,44 +1098,3 @@ process.on('SIGTERM', async () => {
   await redisClient.quit();
   process.exit(0);
 });
-
-  // Admin: Get platform statistics
-  getAdminStats: async (req, res) => {
-    try {
-      // Check if user is admin
-      if (req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-
-      // Get user statistics
-      const totalUsers = await prisma.user.count();
-
-      // Get order statistics
-      const totalOrders = await prisma.order.count();
-
-      // Get pending reviews (documents with PENDING_REVIEW status)
-      const pendingReviews = await prisma.document.count({
-        where: { status: 'PENDING_REVIEW' }
-      });
-
-      // Get active conversations (Redis keys)
-      let activeConversations = 0;
-      try {
-        const keys = await redisClient.keys('chat:*:*');
-        activeConversations = keys.length;
-      } catch (redisError) {
-        console.warn('Redis error getting active conversations:', redisError);
-        activeConversations = 0;
-      }
-
-      res.json({
-        totalUsers,
-        totalOrders,
-        pendingReviews,
-        activeConversations
-      });
-    } catch (error) {
-      console.error('Error fetching admin stats:', error);
-      res.status(500).json({ error: 'Failed to fetch statistics' });
-    }
-  }

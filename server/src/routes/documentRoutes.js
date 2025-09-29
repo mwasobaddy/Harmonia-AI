@@ -95,4 +95,67 @@ router.get('/:id/download', authenticateToken, async (req, res) => {
   }
 });
 
+// Update document status (admin only)
+router.put('/:id/status', authenticateToken, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const document = await prisma.document.update({
+      where: { id },
+      data: { status }
+    });
+
+    res.json({ document });
+  } catch (error) {
+    console.error('Error updating document status:', error);
+    res.status(500).json({ error: 'Failed to update document status' });
+  }
+});
+
+// Admin: Get all documents
+router.get('/admin/all', authenticateToken, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const documents = await prisma.document.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        },
+        order: {
+          include: {
+            responses: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json({ documents });
+  } catch (error) {
+    console.error('Error fetching all documents:', error);
+    res.status(500).json({ error: 'Failed to fetch documents' });
+  }
+});
+
 module.exports = router;

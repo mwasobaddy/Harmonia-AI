@@ -69,7 +69,8 @@ const authController = {
         const token = jwt.sign(
           {
             userId: req.user.id,
-            email: req.user.email
+            email: req.user.email,
+            role: req.user.role
           },
           process.env.JWT_SECRET,
           { expiresIn: '7d' }
@@ -147,6 +148,7 @@ const authController = {
           email: true,
           name: true,
           avatar: true,
+          role: true,
           isVerified: true,
           createdAt: true
         }
@@ -281,7 +283,7 @@ const authController = {
 
       // Generate JWT token
       const token = jwt.sign(
-        { userId: user.id, email: user.email },
+        { userId: user.id, email: user.email, role: user.role },
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );
