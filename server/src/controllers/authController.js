@@ -27,6 +27,7 @@ async (accessToken, refreshToken, profile, done) => {
           email: profile.emails[0].value,
           name: profile.displayName,
           avatar: profile.photos[0].value,
+          role: 'user',
           isVerified: true // Google accounts are pre-verified
         }
       });
@@ -231,6 +232,7 @@ const authController = {
         data: {
           email,
           password: hashedPassword,
+          role: 'user',
           isVerified: false // Email verification could be added later
         },
         select: {
@@ -238,6 +240,7 @@ const authController = {
           email: true,
           name: true,
           avatar: true,
+          role: true,
           isVerified: true,
           createdAt: true
         }
