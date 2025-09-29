@@ -21,7 +21,7 @@ export default function Modal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-600/50 backdrop-blur-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-600/50 backdrop-blur-md w-screen top-0 left-0">
       <div className="bg-[#0f2b2fcc] rounded-lg shadow-xl max-w-md w-full mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-4">

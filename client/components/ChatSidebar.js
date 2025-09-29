@@ -106,9 +106,8 @@ export default function ChatSidebar({
   }
 
   const handleDeleteConversation = async (conversation) => {
-    const isSessionChat = conversation.type === 'draft'
     const confirmAction = async () => {
-      await onDeleteConversation(conversation.sessionId, isSessionChat)
+      await onDeleteConversation(conversation.sessionId)
     }
 
     setModalState({
@@ -130,11 +129,8 @@ export default function ChatSidebar({
     const selectedCount = selectedConversations.size
     if (selectedCount === 0) return
 
-    const sessionChats = conversations.filter(conv => selectedConversations.has(conv.sessionId) && conv.type === 'draft')
-    const dbChats = conversations.filter(conv => selectedConversations.has(conv.sessionId) && conv.type !== 'draft')
-
     const confirmAction = async () => {
-      await onDeleteSelectedConversations(Array.from(selectedConversations), sessionChats.map(c => c.sessionId), dbChats.map(c => c.sessionId))
+      await onDeleteSelectedConversations(Array.from(selectedConversations))
       setSelectedConversations(new Set())
       setIsSelectionMode(false)
     }
@@ -143,7 +139,7 @@ export default function ChatSidebar({
       isOpen: true,
       icon: Trash2,
       title: 'Delete Selected Chats',
-      message: `Are you sure you want to delete ${selectedCount} conversation(s)?\n\nSession chats (${sessionChats.length}): permanently deleted\nDatabase chats (${dbChats.length}): soft deleted`,
+      message: `Are you sure you want to delete ${selectedCount} conversation(s)? This action cannot be undone for session chats and will mark database chats as deleted.`,
       confirmText: 'Delete All',
       onConfirm: confirmAction,
       iconColor: 'text-red-500',
