@@ -49,6 +49,8 @@ export default function Chat() {
             conv.title.toLowerCase().includes(searchTerm.toLowerCase())
         )
     }, [conversations, searchTerm])
+
+    // Generate a concise title from a user message
     const generateTitleFromMessage = (message) => {
         if (!message || message.length === 0) return 'New Conversation'
 
@@ -59,8 +61,8 @@ export default function Chat() {
         // If message is too short, return it as is
         if (cleanMessage.length <= 3) return cleanMessage || 'New Conversation'
 
-        // Take first 40 characters, but try to break at word boundaries
-        let title = cleanMessage.substring(0, 40)
+        // Take first 25 characters, but try to break at word boundaries
+        let title = cleanMessage.substring(0, 25)
         const lastSpace = title.lastIndexOf(' ')
 
         // If we have a space and it's not too close to the start, break there
@@ -216,14 +218,9 @@ export default function Chat() {
 
             // Set conversation details
             const userMessages = data.messages ? data.messages.filter(msg => msg.role === 'user') : []
-            
-            // Check for persisted title first
-            const persistedTitle = localStorage.getItem(`conversation_title_${id}`)
-            const finalTitle = persistedTitle || 
-                (data.title && data.title !== 'New Conversation' && data.title !== 'Conversation'
-                    ? data.title
-                    : (userMessages.length >= 2 ? generateTitleFromMessage(userMessages[1].content) : 'Starting consultation...'))
-            
+            const finalTitle = data.title && data.title !== 'New Conversation' && data.title !== 'Conversation'
+                ? data.title
+                : (userMessages.length >= 2 ? generateTitleFromMessage(userMessages[1].content) : 'Starting consultation...')
             setConversation({ sessionId: id, title: finalTitle, isCompleted: data.isCompleted || false })
         } catch (error) {
             console.error('❌ [DEBUG] Error loading conversation:', error)
@@ -260,9 +257,6 @@ export default function Chat() {
             ))
             // Update local conversation state
             setConversation(prev => ({ ...prev, title: newTitle }))
-            
-            // Persist the generated title in localStorage for consistency across page navigations
-            localStorage.setItem(`conversation_title_${conversation.sessionId}`, newTitle)
         }
 
         console.log('📤 [DEBUG] Frontend sending message:', {
@@ -424,7 +418,7 @@ export default function Chat() {
                         </button>
                         <div className="w-10 h-10 rounded-full bg-[#73cfd0] flex items-center justify-center text-black font-bold text-lg">{conversation?.title?.charAt(0)?.toUpperCase() || 'C'}</div>
                         <div className="flex flex-col">
-                            <span className="text-black font-semibold text-lg">{conversation?.title || 'Conversation'}</span>
+                            <span className="text-white font-semibold text-lg">{conversation?.title || 'Conversation'}</span>
                             <span className="text-[#73cfd0] text-xs">{conversation?.isCompleted ? 'Completed' : 'In Progress'}</span>
                         </div>
                     </div>

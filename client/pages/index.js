@@ -1,24 +1,18 @@
-import Head from 'next/head'
-import { Header, Hero, ServicesSection, Info, Footer, BottomNav } from '../components'
+import React, { useState, useEffect, useRef } from 'react';
+import { Header, Hero, ServicesSection, BottomNav, Footer, Info, Layout } from '../components';
 
-export default function Home() {
-  return (
-    <>
-      <Head>
-        <title>Harmonia-AI - Professional Legal Mitigation Services</title>
-        <meta name="description" content="AI-powered legal mitigation document preparation for minor criminal offences" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/logo.png" />
-      </Head>
-
-      <main className="min-h-screen bg-[#0f2b2fcc] flex flex-col">
-        <Header />
-        <Hero />
-        <ServicesSection />
-        <Info />
-        <Footer />
-        <BottomNav />
-      </main>
-    </>
-  )
+// Main Demo Component
+export default function ModernHarmoniaUI() {
+  return (    
+  <Layout
+      title="Home - Harmonia-AI"
+      description="Learn about our mission to provide affordable legal mitigation services powered by AI"
+    >
+      <Hero />
+      <ServicesSection />
+      <Info />
+      <Footer />
+      <BottomNav />
+    </Layout>
+  );
 }
