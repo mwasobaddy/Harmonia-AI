@@ -81,6 +81,40 @@ const redisHelpers = {
       console.error('❌ Redis get all conversations error:', error);
       return {};
     }
+  },
+
+  // Cache conversation list for 30 seconds to reduce DB load
+  async getCachedConversations(userId) {
+    try {
+      const key = `conversations:${userId}`;
+      const data = await redisClient.get(key);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error('❌ Redis get cached conversations error:', error);
+      return null;
+    }
+  },
+
+  async setCachedConversations(userId, conversations) {
+    try {
+      const key = `conversations:${userId}`;
+      await redisClient.setEx(key, 30, JSON.stringify(conversations)); // 30 second TTL
+      return true;
+    } catch (error) {
+      console.error('❌ Redis set cached conversations error:', error);
+      return false;
+    }
+  },
+
+  async invalidateConversationsCache(userId) {
+    try {
+      const key = `conversations:${userId}`;
+      await redisClient.del(key);
+      return true;
+    } catch (error) {
+      console.error('❌ Redis invalidate conversations cache error:', error);
+      return false;
+    }
   }
 };
 
@@ -567,6 +601,9 @@ const chatController = {
       // Auto-save to database if conditions met
       await autoSaveConversation(userId, currentSessionId, updatedConversation);
 
+      // Invalidate conversations cache since we may have updated drafts
+      await redisHelpers.invalidateConversationsCache(userId);
+
       // If this conversation is final (completed questionnaire), remove any draft and in-memory session
       if (isFinal) {
         try {
@@ -589,6 +626,9 @@ const chatController = {
         } catch (redisDelErr) {
           console.error('❌ Error deleting Redis session after completion:', redisDelErr);
         }
+
+        // Invalidate cache again after completion changes
+        await redisHelpers.invalidateConversationsCache(userId);
       }
 
       console.log('💬 [DEBUG] Sending response:', {
@@ -629,6 +669,15 @@ const chatController = {
   getConversations: async (req, res) => {
     try {
       const userId = req.user.userId;
+
+      // Check cache first
+      const cachedConversations = await redisHelpers.getCachedConversations(userId);
+      if (cachedConversations) {
+        console.log('📋 [CACHE] Returning cached conversations for user:', userId);
+        return res.json({ conversations: cachedConversations });
+      }
+
+      console.log('📋 [DB] Fetching conversations from database for user:', userId);
 
       // Get Redis conversations
       const redisConversations = await redisHelpers.getAllUserConversations(userId);
@@ -747,6 +796,9 @@ const chatController = {
       // Sort by last message time (most recent first)
       allConversations.sort((a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime));
 
+      // Cache the result for 30 seconds
+      await redisHelpers.setCachedConversations(userId, allConversations);
+
       res.json({ conversations: allConversations });
     } catch (error) {
       console.error('Error fetching conversations:', error);
@@ -840,6 +892,9 @@ const chatController = {
       const { sessionId } = req.params;
 
       console.log('🗑️ [DEBUG] Soft deleting conversation:', { userId, sessionId });
+
+      // Invalidate conversations cache since we're modifying the list
+      await redisHelpers.invalidateConversationsCache(userId);
 
       // First, try to delete as Redis session
       const deletedFromRedis = await redisHelpers.deleteConversation(userId, sessionId);
@@ -1034,6 +1089,9 @@ const chatController = {
           offenseType: offenseType || null
         }
       });
+
+      // Invalidate conversations cache since we modified drafts
+      await redisHelpers.invalidateConversationsCache(userId);
 
       console.log(`💾 [MANUAL-SAVE] ${isUpdate ? 'Updated' : 'Created'} draft:`, { draftId: draft.id, sessionId });
       res.json({ success: true, draftId: draft.id });
