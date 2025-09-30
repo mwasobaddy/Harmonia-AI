@@ -5,9 +5,7 @@ const redis = require('redis');
 
 // Redis client for session caching (survives restarts with persistence)
 const redisClient = redis.createClient({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
-  // Enable persistence by configuring Redis server with AOF or RDB
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
 });
 
 // Redis connection handling
