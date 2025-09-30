@@ -601,8 +601,8 @@ const chatController = {
       // Auto-save to database if conditions met
       await autoSaveConversation(userId, currentSessionId, updatedConversation);
 
-      // Invalidate conversations cache since we may have updated drafts
-      await redisHelpers.invalidateConversationsCache(userId);
+      // Note: Not invalidating cache here since auto-save doesn't change the conversation list structure
+      // Cache will naturally expire in 30 seconds, keeping messageCount/lastMessageTime reasonably fresh
 
       // If this conversation is final (completed questionnaire), remove any draft and in-memory session
       if (isFinal) {
