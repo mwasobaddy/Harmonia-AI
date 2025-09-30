@@ -66,7 +66,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Download document content
+// Download document content (streamed as PDF)
+const PDFDocument = require('pdfkit');
 router.get('/:id/download', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -84,14 +85,101 @@ router.get('/:id/download', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    // Set headers for file download
-    res.setHeader('Content-Type', 'text/plain');
-    res.setHeader('Content-Disposition', `attachment; filename="mitigation-statement-${id}.txt"`);
+    // Stream PDF response
+    res.setHeader('Content-Type', 'application/pdf');
+    const filename = document.filename || `mitigation-statement-${id}.pdf`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-    res.send(document.content);
+    const doc = new PDFDocument({ autoFirstPage: true, bufferPages: true });
+    doc.pipe(res);
+
+    // Simple text layout: split into paragraphs and add
+    const text = document.content || '';
+    const paragraphs = text.split(/\n\n+/g);
+    paragraphs.forEach((p) => {
+      doc.font('Helvetica').fontSize(11).text(p, { align: 'left', paragraphGap: 8 });
+      doc.moveDown(0.5);
+    });
+
+    doc.end();
   } catch (error) {
     console.error('Error downloading document:', error);
     res.status(500).json({ error: 'Failed to download document' });
+  }
+});
+
+// Admin: download any document by ID
+router.get('/admin/:id/download', authenticateToken, async (req, res) => {
+  try {
+    // Only admins may download arbitrary documents
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { id } = req.params;
+
+    const document = await prisma.document.findUnique({
+      where: { id }
+    });
+
+    if (!document || document.deletedAt) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    // Stream PDF response for admin download
+    res.setHeader('Content-Type', 'application/pdf');
+    const filename = (document.filename && document.filename.endsWith('.pdf')) ? document.filename : `mitigation-statement-${id}.pdf`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument({ autoFirstPage: true, bufferPages: true });
+    doc.pipe(res);
+
+    const text = document.content || '';
+    const paragraphs = text.split(/\n\n+/g);
+    paragraphs.forEach((p) => {
+      doc.font('Helvetica').fontSize(11).text(p, { align: 'left', paragraphGap: 8 });
+      doc.moveDown(0.5);
+    });
+
+    doc.end();
+  } catch (error) {
+    console.error('Error downloading document (admin):', error);
+    res.status(500).json({ error: 'Failed to download document' });
+  }
+});
+
+// Admin: update document content (mitigation statement)
+router.put('/admin/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { id } = req.params;
+    const { content } = req.body;
+
+    if (typeof content !== 'string') {
+      return res.status(400).json({ error: 'Invalid content' });
+    }
+
+    const existing = await prisma.document.findUnique({ where: { id } });
+    if (!existing || existing.deletedAt) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    const document = await prisma.document.update({
+      where: { id },
+      data: {
+        content,
+        updatedAt: new Date()
+      }
+    });
+
+    res.json({ document });
+  } catch (error) {
+    console.error('Error updating document (admin):', error);
+    res.status(500).json({ error: 'Failed to update document' });
   }
 });
 

@@ -410,6 +410,8 @@ const chatController = {
                   create: {
                     userId: userId,
                     sessionId: currentSessionId,
+                    // When a conversation is completed we set a generic title so the UI shows
+                    // the 'Starting consultation...' placeholder rather than a generated title
                     title: title,
                     messages: JSON.stringify(conversationWithCurrentMessage),
                     offenseType: offenseType
@@ -565,6 +567,30 @@ const chatController = {
       // Auto-save to database if conditions met
       await autoSaveConversation(userId, currentSessionId, updatedConversation);
 
+      // If this conversation is final (completed questionnaire), remove any draft and in-memory session
+      if (isFinal) {
+        try {
+          // Remove draft conversation from DB (if exists)
+          await prisma.draftConversation.deleteMany({
+            where: {
+              userId,
+              sessionId: currentSessionId
+            }
+          });
+          console.log('🗑️ Deleted draftConversation for', { userId, sessionId: currentSessionId });
+        } catch (delErr) {
+          console.error('❌ Error deleting draftConversation after completion:', delErr);
+        }
+
+        try {
+          // Remove Redis session so it's not listed as an active draft/session
+          await redisHelpers.deleteConversation(userId, currentSessionId);
+          console.log('🗑️ Deleted Redis session for', { userId, sessionId: currentSessionId });
+        } catch (redisDelErr) {
+          console.error('❌ Error deleting Redis session after completion:', redisDelErr);
+        }
+      }
+
       console.log('💬 [DEBUG] Sending response:', {
         responseText: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''),
         sessionId: currentSessionId,
@@ -644,15 +670,26 @@ const chatController = {
       });
 
       const databaseConversations = dbOrders.map(order => {
-        // Get the title from the response
+        // Get the stored response (if any)
         const firstResponse = order.responses[0];
-        const title = firstResponse ? firstResponse.title : `${order.offenseType} Case`;
+        let title = firstResponse ? firstResponse.title : `${order.offenseType} Case`;
+
+        // Parse messages to get an accurate message count (stored as JSON)
+        let messageCount = 0;
+        try {
+          if (firstResponse && firstResponse.messages) {
+            const msgs = JSON.parse(firstResponse.messages);
+            messageCount = Array.isArray(msgs) ? msgs.length : 0;
+          }
+        } catch (e) {
+          messageCount = order.responses.length * 2; // fallback approximation
+        }
 
         return {
           id: order.id, // Use database ID
           sessionId: order.id, // Also set sessionId for frontend compatibility
           title,
-          messageCount: order.responses.length * 2, // Approximate: questions + answers
+          messageCount,
           lastMessageTime: order.createdAt.toISOString(),
           isCompleted: true, // Database orders are always completed
           type: 'order', // Mark as database order
