@@ -51,7 +51,7 @@ export default function AdminUsers() {
       setIsLoading(true);
 
       // Fetch all users (admin endpoint)
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const response = await fetch('https://harmonia-ai-backend.onrender.com/api/admin/users', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
@@ -74,7 +74,7 @@ export default function AdminUsers() {
 
   const updateUserRole = async (userId, newRole) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}/role`, {
+      const response = await fetch(`https://harmonia-ai-backend.onrender.com/api/admin/users/${userId}/role`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

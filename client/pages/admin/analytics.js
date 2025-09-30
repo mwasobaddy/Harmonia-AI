@@ -61,7 +61,7 @@ export default function AdminAnalytics() {
       setIsLoading(true);
 
       // Fetch analytics data
-      const response = await fetch(`http://localhost:5000/api/admin/analytics?range=${timeRange}`, {
+      const response = await fetch(`https://harmonia-ai-backend.onrender.com/api/admin/analytics?range=${timeRange}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }

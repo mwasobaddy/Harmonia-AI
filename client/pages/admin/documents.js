@@ -65,7 +65,7 @@ export default function AdminDocuments() {
       setIsLoading(true);
 
       // Fetch all documents (admin endpoint)
-      const response = await fetch('http://localhost:5000/api/documents/admin/all', {
+      const response = await fetch('https://harmonia-ai-backend.onrender.com/api/documents/admin/all', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
@@ -88,7 +88,7 @@ export default function AdminDocuments() {
 
   const updateDocumentStatus = async (documentId, newStatus) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/documents/${documentId}/status`, {
+      const response = await fetch(`https://harmonia-ai-backend.onrender.com/api/documents/${documentId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ export default function AdminDocuments() {
   const downloadDocument = async (documentId, filename) => {
     try {
       // If viewing as admin, use the admin download endpoint which doesn't require ownership
-      const base = 'http://localhost:5000/api/documents';
+      const base = 'https://harmonia-ai-backend.onrender.com/api/documents';
       const url = user?.role === 'admin' ? `${base}/admin/${documentId}/download` : `${base}/${documentId}/download`;
 
       const response = await fetch(url, {
@@ -353,7 +353,7 @@ export default function AdminDocuments() {
                   onClick={async () => {
                     try {
                       setIsSaving(true);
-                      const res = await fetch(`http://localhost:5000/api/documents/admin/${editingDoc.id}`, {
+                      const res = await fetch(`https://harmonia-ai-backend.onrender.com/api/documents/admin/${editingDoc.id}`, {
                         method: 'PUT',
                         headers: {
                           'Content-Type': 'application/json',

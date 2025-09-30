@@ -45,7 +45,7 @@ export default function Profile() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/profile', {
+      const response = await fetch('https://harmonia-ai-backend.onrender.com/api/auth/profile', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -84,7 +84,7 @@ export default function Profile() {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:5000/api/auth/profile', {
+      const response = await fetch('https://harmonia-ai-backend.onrender.com/api/auth/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

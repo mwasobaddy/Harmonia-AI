@@ -50,7 +50,7 @@ export default function Login() {
       // Fetch user profile to check role
       const fetchProfileAndRedirect = async () => {
         try {
-          const response = await fetch('http://localhost:5000/api/auth/profile', {
+          const response = await fetch('https://harmonia-ai-backend.onrender.com/api/auth/profile', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -92,7 +92,7 @@ export default function Login() {
     setIsLoading(true);
     setLoadingText('Redirecting to Google...');
     toast('Redirecting to Google...');
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = 'https://harmonia-ai-backend.onrender.com/api/auth/google';
   };
 
   // --- Unified Sign In handler ---
@@ -115,7 +115,7 @@ export default function Login() {
 
     try {
       // First try to login
-      const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+      const loginResponse = await fetch('https://harmonia-ai-backend.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,7 +145,7 @@ export default function Login() {
       // If login failed, try to register (assuming user doesn't exist)
       if (!loginResponse.ok && loginResponse.status === 401) {
         setLoadingText('Creating account...');
-        const registerResponse = await fetch('http://localhost:5000/api/auth/register', {
+        const registerResponse = await fetch('https://harmonia-ai-backend.onrender.com/api/auth/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -157,7 +157,7 @@ export default function Login() {
 
         if (registerResponse.ok) {
           // Account created successfully, now login
-          const newLoginResponse = await fetch('http://localhost:5000/api/auth/login', {
+          const newLoginResponse = await fetch('https://harmonia-ai-backend.onrender.com/api/auth/login', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

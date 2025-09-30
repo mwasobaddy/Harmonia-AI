@@ -84,7 +84,7 @@ export default function AdminDashboard() {
       setIsLoading(true);
 
       // Fetch dashboard statistics
-      const response = await fetch('http://localhost:5000/api/chat/admin/stats', {
+      const response = await fetch('https://harmonia-ai-backend.onrender.com/api/chat/admin/stats', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
       setIsLoadingActivities(true);
 
       // Fetch recent activities
-      const response = await fetch('http://localhost:5000/api/chat/admin/recent-activity', {
+      const response = await fetch('https://harmonia-ai-backend.onrender.com/api/chat/admin/recent-activity', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }

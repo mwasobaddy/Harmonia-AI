@@ -90,7 +90,7 @@ export default function AdminSettings() {
       setIsLoading(true);
 
       // Fetch current settings (this would be a real API call)
-      const response = await fetch('http://localhost:5000/api/admin/settings', {
+      const response = await fetch('https://harmonia-ai-backend.onrender.com/api/admin/settings', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
@@ -146,7 +146,7 @@ export default function AdminSettings() {
         }
       });
 
-      const response = await fetch('http://localhost:5000/api/admin/settings', {
+      const response = await fetch('https://harmonia-ai-backend.onrender.com/api/admin/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
