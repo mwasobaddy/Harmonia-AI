@@ -69,7 +69,39 @@ export default function AdminAnalytics() {
 
       if (response.ok) {
         const data = await response.json();
-        setAnalytics(data);
+
+        // Map server response into the flat shape this component expects
+        const mapped = {
+          totalUsers: data?.overview?.totalUsers ?? 0,
+          previousUsers: data?.overview?.previousUsers ?? 0,
+
+          totalOrders: data?.overview?.totalOrders ?? 0,
+          previousOrders: data?.overview?.previousOrders ?? 0,
+
+          totalDocuments: data?.overview?.totalDocuments ?? 0,
+          previousDocuments: data?.overview?.previousDocuments ?? 0,
+
+          // Document counters (fallbacks)
+          pendingReviews: data?.pendingReviews ?? 0,
+          approvedDocuments: data?.approvedDocuments ?? 0,
+          rejectedDocuments: data?.rejectedDocuments ?? 0,
+
+          activeConversations: data?.activeConversations ?? 0,
+
+          // Revenue fields
+          revenue: data?.revenue ?? 0,
+          previousRevenue: data?.previousRevenue ?? 0,
+
+          // Growth arrays / chart data
+          userGrowth: data?.charts?.userRegistrations ?? [],
+          orderGrowth: data?.charts?.orderData ?? [],
+          documentGrowth: data?.charts?.documentData ?? [],
+
+          // Keep any other properties if present
+          ...data
+        };
+
+        setAnalytics(mapped);
       } else {
         console.error('Failed to load analytics');
         toast.error('Failed to load analytics');
@@ -276,7 +308,7 @@ export default function AdminAnalytics() {
         {/* Export Button */}
         <div className="mt-8 text-center">
           <Button
-            onClick={() => toast.info('Export functionality would be implemented here')}
+            onClick={() => toast('Export functionality would be implemented here')}
             className="bg-[#73cfd0] text-black hover:bg-white"
           >
             Export Analytics Report

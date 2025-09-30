@@ -50,6 +50,17 @@ export default function AdminSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('api');
+  const secretKeys = [
+    'claudeApiKey',
+    'pineconeApiKey',
+    'stripeSecretKey',
+    'stripeWebhookSecret',
+    'jwtSecret'
+  ];
+
+  // Track which secret fields are currently in edit mode and their input values
+  const [secretEditing, setSecretEditing] = useState({});
+  const [secretInputs, setSecretInputs] = useState({});
   const router = useRouter();
   const { isLoggedIn, loading, user } = useAuth();
 
@@ -87,7 +98,26 @@ export default function AdminSettings() {
 
       if (response.ok) {
         const data = await response.json();
-        setSettings(prev => ({ ...prev, ...data.settings }));
+        // Initialize settings and secret editing state
+        const incoming = data.settings || {};
+        const nextSettings = { ...settings };
+        const nextSecretInputs = {};
+        const nextSecretEditing = {};
+
+        Object.keys(incoming).forEach(k => {
+          if (secretKeys.includes(k)) {
+            // server returns masked secrets by default; keep them in settings but clear input
+            nextSettings[k] = incoming[k];
+            nextSecretInputs[k] = '';
+            nextSecretEditing[k] = false;
+          } else {
+            nextSettings[k] = incoming[k];
+          }
+        });
+
+        setSettings(prev => ({ ...prev, ...nextSettings }));
+        setSecretInputs(prev => ({ ...prev, ...nextSecretInputs }));
+        setSecretEditing(prev => ({ ...prev, ...nextSecretEditing }));
       } else {
         // For demo purposes, load from .env values
         console.log('Using demo settings');
@@ -104,13 +134,25 @@ export default function AdminSettings() {
     try {
       setIsSaving(true);
 
+      // Build payload: include non-secret fields; include secret fields only when edited
+      const payload = {};
+      Object.keys(settings).forEach((key) => {
+        if (secretKeys.includes(key)) {
+          if (secretEditing[key] && secretInputs[key]) {
+            payload[key] = secretInputs[key];
+          }
+        } else {
+          payload[key] = settings[key];
+        }
+      });
+
       const response = await fetch('http://localhost:5000/api/admin/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
-        body: JSON.stringify({ settings })
+        body: JSON.stringify({ settings: payload })
       });
 
       if (response.ok) {
@@ -131,6 +173,18 @@ export default function AdminSettings() {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleSecretInputChange = (field, value) => {
+    setSecretInputs(prev => ({ ...prev, [field]: value }));
+  };
+
+  const toggleSecretEdit = (field) => {
+    setSecretEditing(prev => ({ ...prev, [field]: !prev[field] }));
+    // clear input when toggling off
+    if (secretEditing[field]) {
+      setSecretInputs(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   const tabs = [
@@ -195,52 +249,116 @@ export default function AdminSettings() {
                 <label className="block text-sm font-medium text-[#73cfd0] mb-2">
                   Claude API Key
                 </label>
-                <input
-                  type="password"
-                  value={settings.claudeApiKey}
-                  onChange={(e) => handleInputChange('claudeApiKey', e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 border border-[#73cfd0]/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#73cfd0] focus:border-transparent"
-                  placeholder="sk-ant-api03-..."
-                />
+                {!secretEditing.claudeApiKey ? (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="password"
+                      value={settings.claudeApiKey || ''}
+                      readOnly
+                      className="w-full px-3 py-2 bg-white/5 border border-[#73cfd0]/20 rounded-lg text-white placeholder-gray-400 opacity-70"
+                      placeholder="************"
+                    />
+                    <Button onClick={() => toggleSecretEdit('claudeApiKey')} className="px-3 py-2">Change</Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="password"
+                      value={secretInputs.claudeApiKey || ''}
+                      onChange={(e) => handleSecretInputChange('claudeApiKey', e.target.value)}
+                      className="w-full px-3 py-2 bg-white/5 border border-[#73cfd0]/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#73cfd0] focus:border-transparent"
+                      placeholder="Enter new Claude API key"
+                    />
+                    <Button onClick={() => toggleSecretEdit('claudeApiKey')} className="px-3 py-2">Cancel</Button>
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[#73cfd0] mb-2">
                   Pinecone API Key
                 </label>
-                <input
-                  type="password"
-                  value={settings.pineconeApiKey}
-                  onChange={(e) => handleInputChange('pineconeApiKey', e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 border border-[#73cfd0]/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#73cfd0] focus:border-transparent"
-                  placeholder="pcsk_..."
-                />
+                {!secretEditing.pineconeApiKey ? (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="password"
+                      value={settings.pineconeApiKey || ''}
+                      readOnly
+                      className="w-full px-3 py-2 bg-white/5 border border-[#73cfd0]/20 rounded-lg text-white placeholder-gray-400 opacity-70"
+                      placeholder="************"
+                    />
+                    <Button onClick={() => toggleSecretEdit('pineconeApiKey')} className="px-3 py-2">Change</Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="password"
+                      value={secretInputs.pineconeApiKey || ''}
+                      onChange={(e) => handleSecretInputChange('pineconeApiKey', e.target.value)}
+                      className="w-full px-3 py-2 bg-white/5 border border-[#73cfd0]/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#73cfd0] focus:border-transparent"
+                      placeholder="Enter new Pinecone API key"
+                    />
+                    <Button onClick={() => toggleSecretEdit('pineconeApiKey')} className="px-3 py-2">Cancel</Button>
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[#73cfd0] mb-2">
                   Stripe Secret Key
                 </label>
-                <input
-                  type="password"
-                  value={settings.stripeSecretKey}
-                  onChange={(e) => handleInputChange('stripeSecretKey', e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 border border-[#73cfd0]/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#73cfd0] focus:border-transparent"
-                  placeholder="sk_live_..."
-                />
+                {!secretEditing.stripeSecretKey ? (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="password"
+                      value={settings.stripeSecretKey || ''}
+                      readOnly
+                      className="w-full px-3 py-2 bg-white/5 border border-[#73cfd0]/20 rounded-lg text-white placeholder-gray-400 opacity-70"
+                      placeholder="************"
+                    />
+                    <Button onClick={() => toggleSecretEdit('stripeSecretKey')} className="px-3 py-2">Change</Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="password"
+                      value={secretInputs.stripeSecretKey || ''}
+                      onChange={(e) => handleSecretInputChange('stripeSecretKey', e.target.value)}
+                      className="w-full px-3 py-2 bg-white/5 border border-[#73cfd0]/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#73cfd0] focus:border-transparent"
+                      placeholder="Enter new Stripe secret key"
+                    />
+                    <Button onClick={() => toggleSecretEdit('stripeSecretKey')} className="px-3 py-2">Cancel</Button>
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-[#73cfd0] mb-2">
                   Stripe Webhook Secret
                 </label>
-                <input
-                  type="password"
-                  value={settings.stripeWebhookSecret}
-                  onChange={(e) => handleInputChange('stripeWebhookSecret', e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 border border-[#73cfd0]/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#73cfd0] focus:border-transparent"
-                  placeholder="whsec_..."
-                />
+                {!secretEditing.stripeWebhookSecret ? (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="password"
+                      value={settings.stripeWebhookSecret || ''}
+                      readOnly
+                      className="w-full px-3 py-2 bg-white/5 border border-[#73cfd0]/20 rounded-lg text-white placeholder-gray-400 opacity-70"
+                      placeholder="************"
+                    />
+                    <Button onClick={() => toggleSecretEdit('stripeWebhookSecret')} className="px-3 py-2">Change</Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="password"
+                      value={secretInputs.stripeWebhookSecret || ''}
+                      onChange={(e) => handleSecretInputChange('stripeWebhookSecret', e.target.value)}
+                      className="w-full px-3 py-2 bg-white/5 border border-[#73cfd0]/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#73cfd0] focus:border-transparent"
+                      placeholder="Enter new Stripe webhook secret"
+                    />
+                    <Button onClick={() => toggleSecretEdit('stripeWebhookSecret')} className="px-3 py-2">Cancel</Button>
+                  </div>
+                )}
               </div>
             </div>
           )}

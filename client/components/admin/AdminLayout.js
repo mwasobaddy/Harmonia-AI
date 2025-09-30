@@ -11,12 +11,16 @@ import {
   BarChart3,
   Settings,
   Menu,
-  X
+  X,
+  MessageSquare,
+  Info,
+  Mail,
+  Layers
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminLayout({ children, title, description }) {
-  const { isLoggedIn, loading, user } = useAuth();
+  const { isLoggedIn, loading, user, logout } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -44,12 +48,33 @@ export default function AdminLayout({ children, title, description }) {
     );
   }
 
-  const sidebarLinks = [
-    { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
-    { href: '/admin/users', label: 'Users', icon: Users },
-    { href: '/admin/documents', label: 'Documents', icon: FileText },
-    { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
-    { href: '/admin/settings', label: 'Settings', icon: Settings },
+  const sidebarGroups = [
+    {
+      title: 'Guest',
+      items: [
+        { href: '/services', label: 'Services', icon: Layers },
+        { href: '/info', label: 'Info', icon: Info },
+        { href: '/about', label: 'About', icon: Info },
+        { href: '/contact', label: 'Contact', icon: Mail }
+      ]
+    },
+    {
+      title: 'Logged in',
+      items: [
+        { href: '/chat', label: 'Chat', icon: MessageSquare },
+        { href: '/documents', label: 'Docs', icon: FileText }
+      ]
+    },
+    {
+      title: 'Admin',
+      items: [
+        { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
+        { href: '/admin/users', label: 'Users', icon: Users },
+        { href: '/admin/documents', label: 'Documents', icon: FileText },
+        { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+        { href: '/admin/settings', label: 'Settings', icon: Settings }
+      ]
+    }
   ];
 
   return (
@@ -75,43 +100,49 @@ export default function AdminLayout({ children, title, description }) {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}>
           <div className="flex flex-col h-full">
-            {/* Sidebar Header */}
-            <div className="flex items-center justify-between p-4 border-b border-[#73cfd0]/20">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#73cfd0] to-[#5abdc4] flex items-center justify-center">
-                  <span className="text-black font-bold text-sm">A</span>
+            {/* Logo with enhanced styling */}
+            <div className="flex items-center gap-3 group cursor-pointer">
+              <div className="relative">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#73cfd0] to-[#5abdc4] flex items-center justify-center shadow-lg">
+                  <img src="/logo.png" alt="Harmonia-AI Logo" className="h-full w-full object-contain" />
                 </div>
-                <span className="text-white font-semibold text-lg">Admin Panel</span>
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full animate-pulse"></div>
               </div>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="lg:hidden p-2 text-white hover:text-[#73cfd0] transition-colors duration-200"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <Link href="/" className="text-2xl md:text-3xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                Harmonia-AI
+              </Link>
             </div>
 
-            {/* Navigation Links */}
-            <nav className="flex-1 px-4 py-6 space-y-2">
-              {sidebarLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive = router.pathname === link.href;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                      isActive
-                        ? 'bg-[#73cfd0] text-black shadow-lg'
-                        : 'text-white/70 hover:text-[#73cfd0] hover:bg-[#73cfd0]/10'
-                    }`}
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    {link.label}
-                  </Link>
-                );
-              })}
+            {/* Navigation Links (grouped) */}
+            <nav className="flex-1 px-4 py-6">
+              {sidebarGroups.map((group) => (
+                <div key={group.title} className="mb-4">
+                  <div className="text-xs text-[#73cfd0] uppercase font-semibold px-3 mb-2">
+                    {group.title}
+                  </div>
+                  <div className="space-y-2">
+                    {group.items.map((link) => {
+                      const Icon = link.icon;
+                      const isActive = router.pathname === link.href;
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                            isActive
+                              ? 'bg-[#73cfd0] text-black shadow-lg'
+                              : 'text-white/70 hover:text-[#73cfd0] hover:bg-[#73cfd0]/10'
+                          }`}
+                          onClick={() => setSidebarOpen(false)}
+                        >
+                          <Icon className="w-5 h-5" />
+                          {link.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </nav>
 
             {/* User Info */}
@@ -126,6 +157,17 @@ export default function AdminLayout({ children, title, description }) {
                   </div>
                   <div className="text-[#73cfd0] text-xs">Administrator</div>
                 </div>
+              </div>
+              <div className="mt-3">
+                <button
+                  onClick={() => {
+                    logout();
+                    router.push('/login');
+                  }}
+                  className="w-full text-left mt-2 px-3 py-2 bg-white/5 border border-[#73cfd0]/10 rounded-md text-sm text-white hover:bg-[#73cfd0] hover:text-black transition-colors"
+                >
+                  Logout
+                </button>
               </div>
             </div>
           </div>
