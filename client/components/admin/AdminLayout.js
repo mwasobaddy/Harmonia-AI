@@ -50,22 +50,6 @@ export default function AdminLayout({ children, title, description }) {
 
   const sidebarGroups = [
     {
-      title: 'Guest',
-      items: [
-        { href: '/services', label: 'Services', icon: Layers },
-        { href: '/info', label: 'Info', icon: Info },
-        { href: '/about', label: 'About', icon: Info },
-        { href: '/contact', label: 'Contact', icon: Mail }
-      ]
-    },
-    {
-      title: 'Logged in',
-      items: [
-        { href: '/chat', label: 'Chat', icon: MessageSquare },
-        { href: '/documents', label: 'Docs', icon: FileText }
-      ]
-    },
-    {
       title: 'Admin',
       items: [
         { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
@@ -74,7 +58,23 @@ export default function AdminLayout({ children, title, description }) {
         { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
         { href: '/admin/settings', label: 'Settings', icon: Settings }
       ]
-    }
+    },
+    {
+      title: 'Guest',
+      items: [
+        { href: '/admin/services', label: 'Services', icon: Layers },
+        { href: '/admin/info', label: 'Info', icon: Info },
+        { href: '/admin/about', label: 'About', icon: Info },
+        { href: '/admin/contact', label: 'Contact', icon: Mail }
+      ]
+    },
+    // {
+    //   title: 'Logged in',
+    //   items: [
+    //     { href: '/chat', label: 'Chat', icon: MessageSquare },
+    //     { href: '/documents', label: 'Docs', icon: FileText }
+    //   ]
+    // }
   ];
 
   return (
@@ -86,7 +86,7 @@ export default function AdminLayout({ children, title, description }) {
         <link rel="icon" href="/logo.png" />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-[#0f2b2f] via-[#1a2332] to-[#0f2b2f] flex">
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-[#0f2b2f] via-[#1a2332] to-[#0f2b2f] flex">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div
@@ -96,25 +96,25 @@ export default function AdminLayout({ children, title, description }) {
         )}
 
         {/* Sidebar */}
-        <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0f2b2f]/95 backdrop-blur-lg border-r border-[#73cfd0]/20 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        <aside className={`fixed overflow-auto inset-y-0 left-0 z-50 w-64 bg-[#0f2b2f]/95 backdrop-blur-lg border-r border-[#73cfd0]/20 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}>
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full px-4 pb-6">
             {/* Logo with enhanced styling */}
-            <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="flex items-center gap-3 group cursor-pointer py-4 border-b border-[#73cfd0]/20 sticky top-0 bg-[#0f2b2f]/95 backdrop-blur-lg">
               <div className="relative">
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#73cfd0] to-[#5abdc4] flex items-center justify-center shadow-lg">
                   <img src="/logo.png" alt="Harmonia-AI Logo" className="h-full w-full object-contain" />
                 </div>
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full animate-pulse"></div>
               </div>
-              <Link href="/" className="text-2xl md:text-3xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              <Link href="/" className="text-2xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                 Harmonia-AI
               </Link>
             </div>
 
             {/* Navigation Links (grouped) */}
-            <nav className="flex-1 px-4 py-6">
+            <nav className="flex-1 pt-4">
               {sidebarGroups.map((group) => (
                 <div key={group.title} className="mb-4">
                   <div className="text-xs text-[#73cfd0] uppercase font-semibold px-3 mb-2">
@@ -174,7 +174,7 @@ export default function AdminLayout({ children, title, description }) {
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 overflow-auto">
           {/* Header */}
           {/* <AdminHeader /> */}
 
@@ -187,7 +187,7 @@ export default function AdminLayout({ children, title, description }) {
           </button>
 
           {/* Page Content */}
-          <main className="flex-1 p-6 lg:p-8">
+          <main className="flex-1 sm:p-0">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>
