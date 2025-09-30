@@ -269,7 +269,7 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {adminMenuItems.map((item, index) => (
               <Link key={index} href={item.href}>
-                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-[#73cfd0]/20 hover:border-[#73cfd0]/40 transition-all duration-300 cursor-pointer group">
+                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-[#73cfd0]/20 hover:border-[#73cfd0]/40 transition-all duration-300 cursor-pointer group h-full">
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
                     <item.icon className="h-6 w-6 text-white" />
                   </div>
