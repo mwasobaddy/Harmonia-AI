@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { Layout, Footer } from '../components';
+import { Layout, Footer } from '../../components';
 
 export default function Privacy() {
     return (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Header, Hero, ServicesSection, BottomNav, Footer, Info, Layout } from '../components';
+import { Header, Hero, ServicesSection, BottomNav, Footer, Info, Layout } from '../../components';
 
 // Main Demo Component
 export default function ModernHarmoniaUI() {

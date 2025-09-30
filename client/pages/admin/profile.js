@@ -2,9 +2,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import Layout from '../components/Layout';
-import Button from '../components/Button';
-import LoadingSpinner from '../components/LoadingSpinner';
+import Layout from '../../components/Layout';
+import Button from '../../components/Button';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import gsap from 'gsap';
 import toast from 'react-hot-toast';
 
