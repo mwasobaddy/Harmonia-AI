@@ -100,3 +100,14 @@ model DraftConversation {
   @@unique([userId, sessionId])
   @@map("draft_conversations")
 }
+
+// Simple key/value store for runtime admin-editable settings
+model Setting {
+  key       String   @id
+  value     String
+  isSecret  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
