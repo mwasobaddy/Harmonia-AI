@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const chatController = require('../controllers/chatController');
 const { authenticateToken } = require('../middleware/authMiddleware');
+const prisma = require('../prismaClient');
 const redis = require('redis');
 
 // Redis client for getting active conversations

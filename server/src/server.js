@@ -51,6 +51,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/documents', require('./routes/documentRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/webhooks', require('./routes/webhookRoutes'));
 
 // Health check
