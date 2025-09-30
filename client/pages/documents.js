@@ -194,9 +194,9 @@ export default function Documents() {
                         >
                           <Eye className="h-5 w-5" />
                         </button>
-                        {document.status === 'APPROVED' && (
+                          {document.status === 'APPROVED' && (
                           <button
-                            onClick={() => downloadDocument(document.id, `mitigation-statement-${document.id}.txt`)}
+                            onClick={() => downloadDocument(document.id, `mitigation-statement-${document.id}.pdf`)}
                             className="p-2 text-[#73cfd0] hover:text-white transition-colors rounded-full hover:bg-[#73cfd0]/10"
                             title="Download"
                           >

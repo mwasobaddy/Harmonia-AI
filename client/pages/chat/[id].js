@@ -510,14 +510,9 @@ export default function Chat() {
                                     value={inputMessage}
                                     onChange={(e) => setInputMessage(e.target.value)}
                                     placeholder="Type a message..."
-                                    className="w-full px-4 py-3 pr-12 rounded-2xl bg-[#1a3a4a] text-white border-2 border-[#73cfd0]/30 focus:outline-none focus:border-[#73cfd0] focus:ring-2 focus:ring-[#73cfd0]/20 placeholder-[#73cfd0]/70 transition-all duration-200 shadow-md"
+                                    className="w-full px-4 py-3 rounded-2xl bg-[#1a3a4a] text-white border-2 border-[#73cfd0]/30 focus:outline-none focus:border-[#73cfd0] focus:ring-2 focus:ring-[#73cfd0]/20 placeholder-[#73cfd0]/70 transition-all duration-200 shadow-md"
                                     disabled={isLoading || isInitialLoading}
                                 />
-                                {inputMessage.trim() && (
-                                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#73cfd0] text-sm opacity-70">
-                                        Press Enter to send
-                                    </div>
-                                )}
                             </div>
                             <button
                                 type="button"

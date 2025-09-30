@@ -10,6 +10,7 @@ import gsap from 'gsap';
 import {
   FileText,
   Download,
+  Edit,
   Eye,
   Search,
   Calendar,
@@ -30,6 +31,9 @@ const statusConfig = {
 export default function AdminDocuments() {
   const [documents, setDocuments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingDoc, setEditingDoc] = useState(null);
+  const [editContent, setEditContent] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const router = useRouter();
@@ -107,7 +111,11 @@ export default function AdminDocuments() {
 
   const downloadDocument = async (documentId, filename) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/documents/${documentId}/download`, {
+      // If viewing as admin, use the admin download endpoint which doesn't require ownership
+      const base = 'http://localhost:5000/api/documents';
+      const url = user?.role === 'admin' ? `${base}/admin/${documentId}/download` : `${base}/${documentId}/download`;
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
@@ -209,7 +217,7 @@ export default function AdminDocuments() {
         {/* Documents Table */}
         <div
           ref={documentsRef}
-          className="bg-white/10 backdrop-blur-lg rounded-xl border border-[#73cfd0]/20 overflow-hidden"
+          className="bg-white/10 backdrop-blur-lg rounded-xl border border-[#73cfd0]/20"
         >
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -281,6 +289,13 @@ export default function AdminDocuments() {
                           >
                             <Download className="h-4 w-4" />
                           </button>
+                          <button
+                            onClick={() => { setEditingDoc(doc); setEditContent(doc.content || ''); }}
+                            className="text-[#73cfd0] hover:text-white transition-colors duration-200"
+                            title="Edit"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
                           {doc.status === 'PENDING_REVIEW' && (
                             <>
                               <button
@@ -318,6 +333,57 @@ export default function AdminDocuments() {
             </div>
           )}
         </div>
+        {/* Edit Modal (simple inline modal) */}
+        {editingDoc && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="bg-[#0f2b2fcc] rounded-lg shadow-xl max-w-3xl w-full mx-4 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Edit Mitigation Statement</h3>
+                <button onClick={() => setEditingDoc(null)} className="text-[#73cfd0] hover:text-white">Close</button>
+              </div>
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                rows={14}
+                className="w-full p-3 rounded-md bg-[#11282b] text-[#e6f7f6] border border-[#73cfd0]/20 focus:outline-none"
+              />
+              <div className="flex justify-end gap-3 mt-4">
+                <button onClick={() => setEditingDoc(null)} className="px-4 py-2 text-white bg-gray-600 rounded-md">Cancel</button>
+                <button
+                  onClick={async () => {
+                    try {
+                      setIsSaving(true);
+                      const res = await fetch(`http://localhost:5000/api/documents/admin/${editingDoc.id}`, {
+                        method: 'PUT',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: JSON.stringify({ content: editContent })
+                      });
+
+                      if (!res.ok) throw new Error('Save failed');
+                      const data = await res.json();
+                      toast.success('Document updated');
+                      // Update local documents list
+                      setDocuments(prev => prev.map(d => d.id === data.document.id ? data.document : d));
+                      setEditingDoc(null);
+                    } catch (err) {
+                      console.error('Failed to save document:', err);
+                      toast.error('Failed to save document');
+                    } finally {
+                      setIsSaving(false);
+                    }
+                  }}
+                  className="px-4 py-2 bg-[#73cfd0] text-black rounded-md"
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
