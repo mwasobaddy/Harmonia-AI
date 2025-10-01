@@ -3,24 +3,7 @@ const router = express.Router();
 const chatController = require('../controllers/chatController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 const prisma = require('../prismaClient');
-const redis = require('redis');
-
-// Redis client for getting active conversations
-const redisClient = redis.createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-});
-
-// Redis connection handling
-redisClient.on('error', (err) => {
-  console.error('❌ Redis connection error in chatRoutes:', err);
-});
-
-redisClient.on('connect', () => {
-  console.log('✅ Connected to Redis in chatRoutes');
-});
-
-// Connect to Redis
-redisClient.connect().catch(console.error);
+const redisClient = require('../redisClient');
 
 // POST /api/chat
 router.post('/', authenticateToken, chatController.handleChat);

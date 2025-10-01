@@ -1,24 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const claudeService = require('../services/claudeService');
 const prisma = require('../prismaClient');
-const redis = require('redis');
-
-// Redis client for session caching (survives restarts with persistence)
-const redisClient = redis.createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-});
-
-// Redis connection handling
-redisClient.on('error', (err) => {
-  console.error('❌ Redis connection error:', err);
-});
-
-redisClient.on('connect', () => {
-  console.log('✅ Connected to Redis');
-});
-
-// Connect to Redis
-redisClient.connect().catch(console.error);
+const redisClient = require('../redisClient');
 
 // Auto-save configuration
 const AUTO_SAVE_MESSAGE_THRESHOLD = 5; // Save every 5 messages
@@ -1143,51 +1126,3 @@ const chatController = {
 };
 
 module.exports = chatController;
-
-// Start periodic auto-save for all active conversations
-setInterval(async () => {
-  try {
-    console.log('⏰ [AUTO-SAVE] Starting periodic save of active conversations...');
-
-    // Get all Redis keys matching chat pattern
-    const keys = await redisClient.keys('chat:*:*');
-
-    for (const key of keys) {
-      const [, userId, sessionId] = key.split(':');
-      const messages = await redisHelpers.getConversation(userId, sessionId);
-
-      if (messages && messages.length > 0) {
-        await autoSaveConversation(userId, sessionId, messages, false);
-      }
-    }
-
-    console.log('⏰ [AUTO-SAVE] Completed periodic save');
-  } catch (error) {
-    console.error('❌ Periodic auto-save error:', error);
-  }
-}, AUTO_SAVE_TIME_INTERVAL);
-
-// Graceful shutdown handling
-process.on('SIGTERM', async () => {
-  console.log('🛑 Received SIGTERM, saving all conversations before shutdown...');
-
-  try {
-    const keys = await redisClient.keys('chat:*:*');
-
-    for (const key of keys) {
-      const [, userId, sessionId] = key.split(':');
-      const messages = await redisHelpers.getConversation(userId, sessionId);
-
-      if (messages && messages.length > 0) {
-        await autoSaveConversation(userId, sessionId, messages, true);
-      }
-    }
-
-    console.log('✅ All conversations saved before shutdown');
-  } catch (error) {
-    console.error('❌ Error saving conversations on shutdown:', error);
-  }
-
-  await redisClient.quit();
-  process.exit(0);
-});

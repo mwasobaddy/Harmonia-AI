@@ -5,7 +5,7 @@ const rateLimit = require('express-rate-limit');
 const passport = require('passport');
 const session = require('express-session');
 const { RedisStore } = require('connect-redis');
-const redis = require('redis');
+const redisClient = require('./redisClient');
 require('dotenv').config();
 
 // Initialize auth controller (this sets up Passport strategies)
@@ -36,28 +36,6 @@ app.use(cors({
   },
   credentials: true
 }));
-
-// Create Redis client for sessions
-const redisClient = redis.createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-});
-
-redisClient.on('error', (err) => {
-  console.error('❌ Redis session store error:', err);
-});
-
-redisClient.on('connect', () => {
-  console.log('✅ Connected to Redis for session store');
-});
-
-redisClient.on('ready', () => {
-  console.log('✅ Redis session store client ready');
-});
-
-// Connect to Redis
-redisClient.connect().catch((err) => {
-  console.error('❌ Failed to connect to Redis for sessions:', err);
-});
 
 // Initialize RedisStore with error handling
 let redisStore;
