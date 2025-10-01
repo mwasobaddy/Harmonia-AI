@@ -46,9 +46,9 @@ try {
   });
   console.log('✅ RedisStore initialized successfully');
 } catch (error) {
-  console.error('❌ Failed to initialize RedisStore:', error);
-  // Fallback to MemoryStore for development
+  console.error('❌ Failed to initialize RedisStore:', error.message);
   console.warn('⚠️  Falling back to MemoryStore - NOT suitable for production!');
+  console.warn('💡 To fix: Ensure REDIS_URL environment variable is set correctly');
   redisStore = null;
 }
 
