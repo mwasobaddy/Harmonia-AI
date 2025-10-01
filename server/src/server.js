@@ -15,7 +15,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -23,18 +25,25 @@ app.use(cors({
 
     const allowedOrigins = [
       'http://localhost:3000',
-      'http://localhost:5000/api',
+      'http://localhost:5000',
       process.env.CLIENT_URL,
-      'https://harmonia-ai.vercel.app'
+      'https://harmonia-ai.vercel.app',
+      'https://harmonia-ai-backend.onrender.com' // Allow backend domain
     ].filter(Boolean); // Remove undefined values
+
+    console.log('🔍 CORS check - Origin:', origin);
+    console.log('🔍 CORS check - Allowed origins:', allowedOrigins);
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
+      console.warn('⚠️  CORS blocked origin:', origin);
       return callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Initialize RedisStore with error handling
