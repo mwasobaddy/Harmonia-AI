@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const passport = require('passport');
 const session = require('express-session');
-const RedisStore = require('connect-redis').default;
+const connectRedis = require('connect-redis');
 const redis = require('redis');
 require('dotenv').config();
 
@@ -52,6 +52,9 @@ redisClient.on('connect', () => {
 
 // Connect to Redis
 redisClient.connect().catch(console.error);
+
+// Initialize RedisStore
+const RedisStore = connectRedis(session);
 
 // Session middleware (required for Passport) - using Redis store
 app.use(session({
