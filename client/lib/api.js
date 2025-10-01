@@ -1,5 +1,7 @@
 // API client for making authenticated requests
-const API_BASE_URL = 'https://harmonia-ai-backend.onrender.com/api'
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? (process.env.NEXT_PUBLIC_BACKEND_URL || 'https://harmonia-ai-backend.onrender.com/api')
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api')
 
 class ApiClient {
   constructor() {
