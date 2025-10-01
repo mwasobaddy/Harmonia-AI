@@ -50,15 +50,32 @@ redisClient.on('connect', () => {
   console.log('✅ Connected to Redis for session store');
 });
 
-// Connect to Redis
-redisClient.connect().catch(console.error);
+redisClient.on('ready', () => {
+  console.log('✅ Redis session store client ready');
+});
 
-// Session middleware (required for Passport) - using Redis store
-app.use(session({
-  store: new RedisStore({
+// Connect to Redis
+redisClient.connect().catch((err) => {
+  console.error('❌ Failed to connect to Redis for sessions:', err);
+});
+
+// Initialize RedisStore with error handling
+let redisStore;
+try {
+  redisStore = new RedisStore({
     client: redisClient,
     prefix: 'harmonia:sess:'
-  }),
+  });
+  console.log('✅ RedisStore initialized successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize RedisStore:', error);
+  // Fallback to MemoryStore for development
+  console.warn('⚠️  Falling back to MemoryStore - NOT suitable for production!');
+  redisStore = null;
+}
+
+// Session middleware (required for Passport) - using Redis store or fallback
+const sessionConfig = {
   secret: process.env.JWT_SECRET || 'fallback-secret',
   resave: false,
   saveUninitialized: false,
@@ -67,7 +84,16 @@ app.use(session({
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
-}));
+};
+
+// Use RedisStore if available, otherwise use default MemoryStore (not recommended for production)
+if (redisStore) {
+  sessionConfig.store = redisStore;
+} else {
+  console.warn('⚠️  Using MemoryStore for sessions - data will be lost on restart!');
+}
+
+app.use(session(sessionConfig));
 
 // Initialize Passport
 app.use(passport.initialize());
