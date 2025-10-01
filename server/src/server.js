@@ -4,6 +4,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const passport = require('passport');
 const session = require('express-session');
+const RedisStore = require('connect-redis').default;
+const redis = require('redis');
 require('dotenv').config();
 
 // Initialize auth controller (this sets up Passport strategies)
@@ -35,8 +37,25 @@ app.use(cors({
   credentials: true
 }));
 
-// Session middleware (required for Passport)
+// Create Redis client for sessions
+const redisClient = redis.createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
+});
+
+redisClient.on('error', (err) => {
+  console.error('❌ Redis session store error:', err);
+});
+
+redisClient.on('connect', () => {
+  console.log('✅ Connected to Redis for session store');
+});
+
+// Connect to Redis
+redisClient.connect().catch(console.error);
+
+// Session middleware (required for Passport) - using Redis store
 app.use(session({
+  store: new RedisStore({ client: redisClient }),
   secret: process.env.JWT_SECRET || 'fallback-secret',
   resave: false,
   saveUninitialized: false,
