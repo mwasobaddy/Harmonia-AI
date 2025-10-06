@@ -136,7 +136,7 @@ class ClaudeService {
 
       ${combinedInput}
       
-      Using the following relevant case information as guidance, draft a comprehensive and professional mitigation statement:
+      Using the following relevant case information as guidance, draft a comprehensive and professional mitigation statement;
 
       ${context}
 
