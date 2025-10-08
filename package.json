@@ -21,7 +21,7 @@
     "claude",
     "pinecone"
   ],
-  "author": "Harmonia-AI",
+  "author": "StreetLegal-AI",
   "license": "ISC",
   "dependencies": {
     "gsap": "^3.13.0"
