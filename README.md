@@ -1,7 +1,7 @@
-# Harmonia-AI - AI-Powered Legal Mitigation Platform
+# StreetLegal-AI - AI-Powered Legal Mitigation Platform
 
 ## Project Description
-Harmonia-AI is a cutting-edge MERN stack application designed to assist users in generating legal mitigation statements for minor criminal offenses, professional regulation cases, and similar scenarios. Leveraging advanced AI technologies like Claude API and Pinecone RAG, the platform provides an interactive chatbot interface for collecting user responses and generating high-quality mitigation statements. The system ensures professional review and secure handling of user data.
+StreetLegal-AI is a cutting-edge MERN stack application designed to assist users in generating legal mitigation statements for minor criminal offenses, professional regulation cases, and similar scenarios. Leveraging advanced AI technologies like Claude API and Pinecone RAG, the platform provides an interactive chatbot interface for collecting user responses and generating high-quality mitigation statements. The system ensures professional review and secure handling of user data.
 
 ## Key Features
 - **Conversational AI Chatbot**: Interactive questionnaire system for gathering mitigation information.
