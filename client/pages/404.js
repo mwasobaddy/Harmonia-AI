@@ -19,7 +19,7 @@ export default function Custom404() {
   return (
     <>
       <Head>
-        <title>404 - Page Not Found | Harmonia-AI</title>
+        <title>404 - Page Not Found | StreetLegal-AI</title>
       </Head>
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#0f2b2f] via-[#1a2332] to-[#0f2b2f] px-4">      {/* Animated background gradients and floating dots */}
         <div className="absolute inset-0">

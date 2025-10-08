@@ -194,7 +194,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <AdminLayout title="Dashboard" description="Admin dashboard for Harmonia-AI platform">
+    <AdminLayout title="Dashboard" description="Admin dashboard for StreetLegal-AI platform">
       <main className="pt-8 pb-12 px-4 sm:px-6 lg:px-8">
         <div ref={dashboardRef} className="max-w-7xl mx-auto">
           {/* Header */}

@@ -111,7 +111,7 @@ export default function Services() {
 
 
   return (
-    <AdminLayout title="Admin - Services" description="Admin services for Harmonia-AI platform">
+    <AdminLayout title="Admin - Services" description="Admin services for StreetLegal-AI platform">
       <div className="bg-gradient-to-b from-[#0f2b2f] to-[#1a2332]">
         <div className="max-w-7xl mx-auto py-20 px-4 sm:px-6 lg:px-8">
           {/* Header section */}

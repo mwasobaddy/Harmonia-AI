@@ -33,7 +33,7 @@ export default function About() {
 
   return (
     <Layout
-      title="About Us - Harmonia-AI"
+      title="About Us - StreetLegal-AI"
       description="Learn about our mission to provide affordable legal mitigation services powered by AI"
     >
       <div className="bg-gradient-to-br from-[#0f2b2f] via-[#1a2332] to-[#0f2b2f]">
@@ -67,7 +67,7 @@ export default function About() {
                 About Us
               </div>
               <h1 className="text-5xl md:text-6xl font-black text-white mb-6 leading-tight">
-                About <span className="text-[#73cfd0]">Harmonia-AI</span>
+                About <span className="text-[#73cfd0]">StreetLegal-AI</span>
               </h1>
               <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
                 Democratizing access to professional legal mitigation services
@@ -82,7 +82,7 @@ export default function About() {
             <div ref={contentRef} className="max-w-4xl mx-auto space-y-12">
               <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10">
                 <p className="text-gray-300 text-xl leading-relaxed">
-                  Harmonia-AI was founded with a simple mission: to make professional legal mitigation
+                  StreetLegal-AI was founded with a simple mission: to make professional legal mitigation
                   services accessible to everyone, regardless of their budget. We understand that facing
                   legal proceedings can be stressful and expensive, which is why we've leveraged cutting-edge
                   AI technology to provide high-quality mitigation statements at a fraction of traditional costs.

@@ -78,7 +78,7 @@ export default function HowItWorks() {
 
 
   return (
-    <AdminLayout title="Admin - Info" description="Admin info for Harmonia-AI platform">
+    <AdminLayout title="Admin - Info" description="Admin info for StreetLegal-AI platform">
       <div className="bg-gradient-to-br from-[#0f2b2f] via-[#1a2332] to-[#0f2b2f]">
         {/* Hero Section */}
         <div className="relative overflow-hidden">

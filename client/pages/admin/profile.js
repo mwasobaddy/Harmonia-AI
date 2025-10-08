@@ -113,7 +113,7 @@ export default function Profile() {
     return (
       <>
         <Head>
-          <title>Profile - Harmonia-AI</title>
+          <title>Profile - StreetLegal-AI</title>
         </Head>
         <div className="min-h-screen bg-[#0f2b2fcc] flex items-center justify-center">
           <LoadingSpinner size="lg" />
@@ -124,7 +124,7 @@ export default function Profile() {
 
   return (
     <Layout
-        title="Profile Settings - Harmonia-AI"
+        title="Profile Settings - StreetLegal-AI"
         description="Manage your profile settings"
     >
 

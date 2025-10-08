@@ -14,7 +14,7 @@ export default function Contact() {
   const contactInfo = [
     {
       title: "Email Support",
-      content: "support@Harmonia-AI.com",
+      content: "support@StreetLegal-AI.com",
       subtext: "We typically respond within 24 hours",
       icon: "M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
     },
@@ -102,7 +102,7 @@ export default function Contact() {
   }, []);
 
   return (
-    <AdminLayout title="Admin - Contact" description="Admin contact for Harmonia-AI platform">
+    <AdminLayout title="Admin - Contact" description="Admin contact for StreetLegal-AI platform">
       <div className="bg-gradient-to-br from-[#0f2b2f] via-[#1a2332] to-[#0f2b2f]">
         {/* Hero Section */}
         <div className="relative overflow-hidden">
