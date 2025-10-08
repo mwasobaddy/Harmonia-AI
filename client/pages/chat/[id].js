@@ -345,7 +345,7 @@ export default function Chat() {
     // WhatsApp-style: show sidebar and chat area side by side on desktop, stacked on mobile
     if (!conversation) {
         return (
-            <Layout title="Chat - Harmonia-AI" description="Your chat conversation">
+            <Layout title="Chat - StreetLegal-AI" description="Your chat conversation">
                 <div className="h-full min-h-0 flex-1 flex flex-row bg-[#111b21]">
                     {/* Sidebar */}
                     <div className="w-full md:w-[380px] max-w-full md:max-w-[380px] flex flex-col min-h-0 bg-[#0f2b2fcc] border-r border-[#222d34] flex-1">
@@ -369,7 +369,7 @@ export default function Chat() {
                     <div className="hidden md:flex flex-1 flex flex-col min-h-0 bg-[#222d34]">
                         <div className="flex-1 flex items-center justify-center">
                             <div className="text-center text-white">
-                                <h2 className="text-2xl font-bold mb-4">Welcome to Harmonia-AI</h2>
+                                <h2 className="text-2xl font-bold mb-4">Welcome to StreetLegal-AI</h2>
                                 <p className="text-gray-300 mb-6">Select a conversation from the sidebar to get started</p>
                                 <button
                                     onClick={handleNewConversation}
@@ -386,7 +386,7 @@ export default function Chat() {
     }
 
     return (
-        <Layout title="Chat - Harmonia-AI" description="Your chat conversation">
+        <Layout title="Chat - StreetLegal-AI" description="Your chat conversation">
             <div className="h-full flex min-h-0 flex-1 flex-row bg-[#0f2b2fcc]">
                 {/* Sidebar (desktop always visible, mobile toggleable) */}
                 <div className={`hidden md:flex md:relative absolute inset-y-0 left-0 z-20`}>

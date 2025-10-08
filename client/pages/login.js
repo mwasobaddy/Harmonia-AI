@@ -206,8 +206,8 @@ export default function Login() {
   return (
     <>
       <Head>
-        <title>Login - Harmonia-AI</title>
-        <meta name="description" content="Login to your Harmonia-AI account" />
+        <title>Login - StreetLegal-AI</title>
+        <meta name="description" content="Login to your StreetLegal-AI account" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/logo.png" />
       </Head>
@@ -224,7 +224,7 @@ export default function Login() {
             {/* Floating Logo */}
             <div ref={logoRef} className="flex items-center justify-center mb-8">
               <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#73cfd0] to-[#5abdc4] flex items-center justify-center shadow-lg">
-                <img src="/logo.png" alt="Harmonia-AI Logo" className="h-10 w-10 object-contain" />
+                <img src="/logo.png" alt="StreetLegal-AI Logo" className="h-10 w-10 object-contain" />
               </div>
             </div>
 

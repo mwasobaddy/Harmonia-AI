@@ -78,7 +78,7 @@ export default function HowItWorks() {
 
   return (
     <Layout
-      title="Info - Harmonia-AI"
+      title="Info - StreetLegal-AI"
       description="Learn about our AI-powered process for creating professional mitigation statements"
     >
       <div className="bg-gradient-to-br from-[#0f2b2f] via-[#1a2332] to-[#0f2b2f]">

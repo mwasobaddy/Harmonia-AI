@@ -111,7 +111,7 @@ export default function Services() {
 
   return (
     <Layout
-      title="Our Services - Harmonia-AI"
+      title="Our Services - StreetLegal-AI"
       description="Professional mitigation statement services for different types of legal matters"
     >
       <div className="bg-gradient-to-b from-[#0f2b2f] to-[#1a2332]">

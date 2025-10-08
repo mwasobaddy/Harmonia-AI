@@ -5,8 +5,8 @@ import { Layout, Footer } from '../components';
 export default function Privacy() {
     return (
         <Layout
-            title="Privacy Policy - Harmonia-AI"
-            description="Privacy Policy for Harmonia-AI - Your data privacy is our priority"
+            title="Privacy Policy - StreetLegal-AI"
+            description="Privacy Policy for StreetLegal-AI - Your data privacy is our priority"
         >
             <div className="bg-gradient-to-br from-[#0f2b2f] via-[#1a2332] to-[#0f2b2f] flex flex-col items-center py-12 px-4 flex-1">
                 <div className="w-full max-w-3xl bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-[#73cfd0]/20 p-8 sm:p-12">

@@ -114,7 +114,7 @@ export default function Documents() {
     return (
       <>
         <Head>
-          <title>Documents - Harmonia-AI</title>
+          <title>Documents - StreetLegal-AI</title>
         </Head>
         <div className="min-h-screen bg-[#0f2b2fcc] md:pb-0 flex flex-col">
           <Header />
@@ -129,7 +129,7 @@ export default function Documents() {
 
   return (
       <Layout
-        title="Chat - Harmonia-AI"
+        title="Chat - StreetLegal-AI"
         description="Your chat conversations"
       >
 
