@@ -156,7 +156,7 @@ export default function Services() {
               href="/chat"
               className="inline-flex items-center px-8 py-3 rounded-xl bg-[#73cfd0] text-black font-semibold shadow-lg hover:bg-[#5abdc4] hover:text-white transition-all duration-300 text-lg group"
             >
-              Start Your Statement
+              sign up
               <svg
                 className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1"
                 fill="none"

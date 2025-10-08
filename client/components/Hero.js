@@ -56,7 +56,7 @@ export default function Hero() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
           <Button href="/chat" size="lg" className="w-full sm:w-auto group">
-            Start Your Statement
+            sign up
             <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
           </Button>
           <Button href="/services" size="lg" variant="secondary" className="w-full sm:w-auto">

@@ -194,7 +194,7 @@ export default function Contact() {
               Create your professional mitigation statement today
             </p>
             <Button href="/chat" size="lg" className="bg-black text-[#73cfd0] hover:bg-white hover:text-black border-2 border-black transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:scale-105">
-              Start Your Statement
+              sign up
             </Button>
           </div>
         </div>
