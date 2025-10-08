@@ -29,12 +29,12 @@ export default function Header() {
           <div className="flex items-center gap-3 group cursor-pointer">
             <div className="relative">
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#73cfd0] to-[#5abdc4] flex items-center justify-center shadow-lg">
-                <img src="/logo.png" alt="Harmonia-AI Logo" className="h-full w-full object-contain" />
+                <img src="/logo.png" alt="StreetLegal-AI Logo" className="h-full w-full object-contain" />
               </div>
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full animate-pulse"></div>
             </div>
             <Link href="/" className="text-2xl md:text-3xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-              Harmonia-AI
+              StreetLegal-AI
             </Link>
           </div>
 

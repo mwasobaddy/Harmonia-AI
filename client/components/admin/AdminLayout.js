@@ -80,7 +80,7 @@ export default function AdminLayout({ children, title, description }) {
   return (
     <>
       <Head>
-        <title>{title} - Harmonia-AI Admin</title>
+        <title>{title} - StreetLegal-AI Admin</title>
         <meta name="description" content={description} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/logo.png" />
@@ -104,12 +104,12 @@ export default function AdminLayout({ children, title, description }) {
             <div className="flex items-center gap-3 group cursor-pointer py-4 border-b border-[#73cfd0]/20 sticky top-0 bg-[#0f2b2f]/95 backdrop-blur-lg">
               <div className="relative">
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#73cfd0] to-[#5abdc4] flex items-center justify-center shadow-lg">
-                  <img src="/logo.png" alt="Harmonia-AI Logo" className="h-full w-full object-contain" />
+                  <img src="/logo.png" alt="StreetLegal-AI Logo" className="h-full w-full object-contain" />
                 </div>
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full animate-pulse"></div>
               </div>
               <Link href="/" className="text-2xl font-black text-white tracking-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Harmonia-AI
+                StreetLegal-AI
               </Link>
             </div>
 

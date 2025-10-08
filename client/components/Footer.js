@@ -14,7 +14,7 @@ export default function Footer() {
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#73cfd0] to-[#5abdc4] flex items-center justify-center text-black text-2xl font-bold shadow-lg">
                 H
               </div>
-              <span className="text-3xl font-black text-white tracking-tight">Harmonia-AI</span>
+              <span className="text-3xl font-black text-white tracking-tight">StreetLegal-AI</span>
             </div>
             <p className="text-gray-300 text-lg leading-relaxed max-w-md mb-8">
               Professional mitigation statements powered by AI and legal expertise. 
@@ -74,7 +74,7 @@ export default function Footer() {
         <div className="border-t border-white/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-400 text-center md:text-left">
-              © 2025 Harmonia-AI. All rights reserved.
+              © 2025 StreetLegal-AI. All rights reserved.
             </p>
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <Shield className="w-4 h-4" />

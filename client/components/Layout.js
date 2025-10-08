@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 
 export default function Layout({
   children,
-  title = 'Harmonia-AI - Professional Legal Mitigation Services',
+  title = 'StreetLegal-AI - Professional Legal Mitigation Services',
   description = 'AI-powered legal mitigation document preparation for minor criminal offences'
 }) {
   const { isLoggedIn, user } = useAuth()

@@ -54,9 +54,9 @@ export default function AdminHeader() {
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#73cfd0] to-[#5abdc4] flex items-center justify-center shadow-lg">
-                <img src="/logo.png" alt="Harmonia-AI Logo" className="h-full w-full object-contain" />
+                <img src="/logo.png" alt="StreetLegal-AI Logo" className="h-full w-full object-contain" />
               </div>
-              <span className="text-xl font-bold text-white">Harmonia-AI</span>
+              <span className="text-xl font-bold text-white">StreetLegal-AI</span>
             </Link>
           </div>
 
