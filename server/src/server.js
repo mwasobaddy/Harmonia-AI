@@ -29,7 +29,7 @@ const corsOptions = {
       'http://localhost:3000',
       'http://localhost:5000',
       process.env.CLIENT_URL,
-      'https://harmonia-ai.vercel.app',
+      'https://www.streetlegal.ai/', // Allow client domain
       'https://harmonia-ai-backend.onrender.com' // Allow backend domain
     ].filter(Boolean); // Remove undefined values
 
