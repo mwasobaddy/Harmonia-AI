@@ -142,8 +142,16 @@ export default function Login() {
         return;
       }
 
-      // If login failed, try to register (assuming user doesn't exist)
-      if (!loginResponse.ok && loginResponse.status === 401) {
+      // Handle different login failure scenarios
+      if (loginResponse.status === 401) {
+        // Check if it's a "no password set" error (Google-only account)
+        if (loginData.loginMethods && !loginData.loginMethods.password) {
+          toast.error('This account was created with Google. Please login with Google or set a password first.');
+          setIsLoading(false);
+          return;
+        }
+
+        // If login failed with 401 and it's not a Google-only account, try to register
         setLoadingText('Creating account...');
         const registerResponse = await fetch('https://harmonia-ai-backend.onrender.com/api/auth/register', {
           method: 'POST',
@@ -183,6 +191,9 @@ export default function Login() {
           } else {
             toast.error('Account created but login failed. Please try signing in again.');
           }
+        } else if (registerResponse.status === 200 && registerData.message?.includes('Password set successfully')) {
+          // Password was set for existing Google account
+          toast.success('Password set for your account! Please sign in again.');
         } else {
           // Handle different register failure reasons
           if (registerData.error === 'User with this email already exists') {

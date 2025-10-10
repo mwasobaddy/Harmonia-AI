@@ -14,6 +14,7 @@ router.get('/verify', authController.verifyToken);
 // Profile routes
 router.get('/profile', authController.getProfile);
 router.put('/profile', authController.updateProfile);
+router.post('/set-password', authController.setPassword);
 
 // Logout
 router.post('/logout', authController.logout);

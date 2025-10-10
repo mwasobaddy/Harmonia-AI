@@ -13,6 +13,11 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [settingPassword, setSettingPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    password: '',
+    confirmPassword: ''
+  });
   const [formData, setFormData] = useState({
     name: '',
     email: ''
@@ -76,6 +81,63 @@ export default function Profile() {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSetPassword = async (e) => {
+    e.preventDefault();
+    if (settingPassword) return;
+
+    if (!passwordData.password || !passwordData.confirmPassword) {
+      toast.error('Please fill in all password fields');
+      return;
+    }
+
+    if (passwordData.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    if (passwordData.password !== passwordData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    setSettingPassword(true);
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('https://harmonia-ai-backend.onrender.com/api/auth/set-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ password: passwordData.password })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        setPasswordData({ password: '', confirmPassword: '' });
+        toast.success('Password set successfully! You can now login with email and password.');
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to set password');
+      }
+    } catch (error) {
+      console.error('Set password error:', error);
+      toast.error('Network error. Please try again.');
+    } finally {
+      setSettingPassword(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -194,6 +256,60 @@ export default function Profile() {
                 </Button>
               </div>
             </form>
+
+            {/* Password Setting Section - Only show if user doesn't have a password */}
+            {!user?.password && (
+              <div className="mt-8 w-full bg-white/10 backdrop-blur-lg rounded-2xl shadow border border-[#73cfd0]/20 p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Set Password</h2>
+                <p className="text-sm text-[#73cfd0]/80 mb-4">
+                  Set a password to enable email and password login for your account.
+                </p>
+                <form onSubmit={handleSetPassword} className="space-y-4">
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-white mb-1">
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      value={passwordData.password}
+                      onChange={handlePasswordChange}
+                      className="mt-1 block w-full px-3 py-2 border border-[#73cfd0] rounded-md shadow-sm focus:outline-none focus:ring-[#73cfd0] focus:border-[#73cfd0] text-black bg-white"
+                      placeholder="Enter new password"
+                      minLength="6"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-white mb-1">
+                      Confirm Password
+                    </label>
+                    <input
+                      type="password"
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      value={passwordData.confirmPassword}
+                      onChange={handlePasswordChange}
+                      className="mt-1 block w-full px-3 py-2 border border-[#73cfd0] rounded-md shadow-sm focus:outline-none focus:ring-[#73cfd0] focus:border-[#73cfd0] text-black bg-white"
+                      placeholder="Confirm new password"
+                      minLength="6"
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      disabled={settingPassword}
+                      className="bg-[#73cfd0] text-black hover:bg-white hover:text-[#0f2b2fcc]"
+                    >
+                      {settingPassword ? 'Setting Password...' : 'Set Password'}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
+
             {/* Account Information Section */}
             <div className="mt-8 w-full bg-white/10 rounded-2xl shadow border border-[#73cfd0]/20 p-6">
               <h2 className="text-lg font-semibold text-white mb-4">Account Information</h2>

@@ -14,23 +14,41 @@ passport.use(new GoogleStrategy({
 },
 async (accessToken, refreshToken, profile, done) => {
   try {
-    // Check if user exists
+    // Check if user exists by Google ID
     let user = await prisma.user.findUnique({
       where: { googleId: profile.id }
     });
 
     if (!user) {
-      // Create new user
-      user = await prisma.user.create({
-        data: {
-          googleId: profile.id,
-          email: profile.emails[0].value,
-          name: profile.displayName,
-          avatar: profile.photos[0].value,
-          role: 'user',
-          isVerified: true // Google accounts are pre-verified
-        }
+      // Check if user exists by email (might have been created with email/password)
+      const existingUserByEmail = await prisma.user.findUnique({
+        where: { email: profile.emails[0].value }
       });
+
+      if (existingUserByEmail) {
+        // Link Google account to existing user
+        user = await prisma.user.update({
+          where: { id: existingUserByEmail.id },
+          data: {
+            googleId: profile.id,
+            avatar: profile.photos[0].value || existingUserByEmail.avatar,
+            name: profile.displayName || existingUserByEmail.name,
+            isVerified: true // Google accounts are pre-verified
+          }
+        });
+      } else {
+        // Create new user
+        user = await prisma.user.create({
+          data: {
+            googleId: profile.id,
+            email: profile.emails[0].value,
+            name: profile.displayName,
+            avatar: profile.photos[0].value,
+            role: 'user',
+            isVerified: true // Google accounts are pre-verified
+          }
+        });
+      }
     }
 
     return done(null, user);
@@ -77,7 +95,21 @@ const authController = {
         );
 
         // Redirect to frontend with token
-        res.redirect(`${process.env.CLIENT_URL}/login?token=${token}&success=true`);
+        const userData = {
+          id: req.user.id,
+          email: req.user.email,
+          name: req.user.name,
+          avatar: req.user.avatar,
+          role: req.user.role,
+          isVerified: req.user.isVerified,
+          createdAt: req.user.createdAt,
+          loginMethods: {
+            google: !!req.user.googleId,
+            password: !!req.user.password
+          }
+        };
+
+        res.redirect(`${process.env.CLIENT_URL}/login?token=${token}&success=true&user=${encodeURIComponent(JSON.stringify(userData))}`);
       } catch (error) {
         console.error('Auth callback error:', error);
         res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`);
@@ -165,43 +197,53 @@ const authController = {
     }
   },
 
-  // Update user profile
-  updateProfile: async (req, res) => {
+  // Set password for Google OAuth users
+  setPassword: async (req, res) => {
     try {
       const token = req.headers.authorization?.split(' ')[1];
+      const { password } = req.body;
 
       if (!token) {
         return res.status(401).json({ error: 'No token provided' });
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const { name, email } = req.body;
+      if (!password || password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+      }
 
-      // Update user profile
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      // Get current user
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId }
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      // Update user with password
       const updatedUser = await prisma.user.update({
-        where: { id: decoded.userId },
-        data: {
-          name: name || undefined,
-          email: email || undefined
-        },
+        where: { id: user.id },
+        data: { password: hashedPassword },
         select: {
           id: true,
           email: true,
           name: true,
           avatar: true,
+          role: true,
           isVerified: true,
           createdAt: true
         }
       });
 
-      res.json({ user: updatedUser });
+      res.json({ message: 'Password set successfully', user: updatedUser });
     } catch (error) {
-      console.error('Profile update error:', error);
-      if (error.code === 'P2002') {
-        res.status(400).json({ error: 'Email already in use' });
-      } else {
-        res.status(500).json({ error: 'Failed to update profile' });
-      }
+      console.error('Set password error:', error);
+      res.status(500).json({ error: 'Failed to set password' });
     }
   },
 
@@ -218,12 +260,31 @@ const authController = {
         return res.status(400).json({ error: 'Password must be at least 6 characters long' });
       }
 
-      // Check if user already exists
+      // Check if user already exists by email
       const existingUser = await prisma.user.findUnique({
         where: { email }
       });
 
       if (existingUser) {
+        // If user exists but has no password (Google-only account), add password
+        if (!existingUser.password) {
+          const hashedPassword = await bcrypt.hash(password, 12);
+          const updatedUser = await prisma.user.update({
+            where: { id: existingUser.id },
+            data: { password: hashedPassword },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              avatar: true,
+              role: true,
+              isVerified: true,
+              createdAt: true
+            }
+          });
+          return res.status(200).json({ message: 'Password set successfully for existing account', user: updatedUser });
+        }
+        // If user exists and has password, return error
         return res.status(400).json({ error: 'User with this email already exists' });
       }
 
@@ -270,8 +331,19 @@ const authController = {
         where: { email }
       });
 
-      if (!user || !user.password) {
+      if (!user) {
         return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      // Check if user has a password set
+      if (!user.password) {
+        return res.status(401).json({
+          error: 'No password set for this account. Please login with Google OAuth or set a password first.',
+          loginMethods: {
+            google: !!user.googleId,
+            password: false
+          }
+        });
       }
 
       // Check password
@@ -296,7 +368,11 @@ const authController = {
         avatar: user.avatar,
         role: user.role,
         isVerified: user.isVerified,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        loginMethods: {
+          google: !!user.googleId,
+          password: !!user.password
+        }
       };
 
       res.json({ token, user: userData });
